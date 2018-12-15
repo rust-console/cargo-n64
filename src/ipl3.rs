@@ -242,7 +242,7 @@ mod tests {
         let (crc1, crc2) = ipl3.compute_crcs(&program, &[]);
 
         assert_eq!(crc1, 0xe124ee34);
-        assert_eq!(crc2, 0xb59efe63);
+        assert_eq!(crc2, 0x8ceb5e63);
     }
 
     #[test]
