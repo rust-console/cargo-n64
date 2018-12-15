@@ -29,24 +29,24 @@ impl From<io::Error> for IPL3Error {
 
 /// IPL3 definitions.
 crate enum IPL3 {
-    IPL36101([u8; IPL_SIZE]),
-    IPL36102([u8; IPL_SIZE]),
-    IPL36103([u8; IPL_SIZE]),
-    IPL36105([u8; IPL_SIZE]),
-    IPL36106([u8; IPL_SIZE]),
-    IPL37102([u8; IPL_SIZE]),
+    IPL3_6101([u8; IPL_SIZE]),
+    IPL3_6102([u8; IPL_SIZE]),
+    IPL3_6103([u8; IPL_SIZE]),
+    IPL3_6105([u8; IPL_SIZE]),
+    IPL3_6106([u8; IPL_SIZE]),
+    IPL3_7102([u8; IPL_SIZE]),
     UNKNOWN([u8; IPL_SIZE]),
 }
 
 impl fmt::Display for IPL3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            IPL3::IPL36101(_) => "NUS-IPL3-6101",
-            IPL3::IPL36102(_) => "NUS-IPL3-6102",
-            IPL3::IPL36103(_) => "NUS-IPL3-6103",
-            IPL3::IPL36105(_) => "NUS-IPL3-6105",
-            IPL3::IPL36106(_) => "NUS-IPL3-6106",
-            IPL3::IPL37102(_) => "NUS-IPL3-7102",
+            IPL3::IPL3_6101(_) => "NUS-CIC-6101",
+            IPL3::IPL3_6102(_) => "NUS-CIC-6102",
+            IPL3::IPL3_6103(_) => "NUS-CIC-6103",
+            IPL3::IPL3_6105(_) => "NUS-CIC-6105",
+            IPL3::IPL3_6106(_) => "NUS-CIC-6106",
+            IPL3::IPL3_7102(_) => "NUS-CIC-7102",
             IPL3::UNKNOWN(_) => "Unknown",
         };
         write!(f, "{}", s)
@@ -79,12 +79,12 @@ impl IPL3 {
         let mut hasher = Hasher::new();
         hasher.update(&ipl);
         let ipl3 = match hasher.finalize() {
-            0x6170a4a1 => IPL3::IPL36101(ipl),
-            0x90bb6cb5 => IPL3::IPL36102(ipl),
-            0x0b050ee0 => IPL3::IPL36103(ipl),
-            0x98bc2c86 => IPL3::IPL36105(ipl),
-            0xacc8580a => IPL3::IPL36106(ipl),
-            0x009e9ea3 => IPL3::IPL37102(ipl),
+            0x6170a4a1 => IPL3::IPL3_6101(ipl),
+            0x90bb6cb5 => IPL3::IPL3_6102(ipl),
+            0x0b050ee0 => IPL3::IPL3_6103(ipl),
+            0x98bc2c86 => IPL3::IPL3_6105(ipl),
+            0xacc8580a => IPL3::IPL3_6106(ipl),
+            0x009e9ea3 => IPL3::IPL3_7102(ipl),
             _ => IPL3::UNKNOWN(ipl),
         };
 
@@ -93,12 +93,12 @@ impl IPL3 {
 
     crate fn get_ipl(&self) -> &[u8; IPL_SIZE] {
         match self {
-            IPL3::IPL36101(bin) => bin,
-            IPL3::IPL36102(bin) => bin,
-            IPL3::IPL36103(bin) => bin,
-            IPL3::IPL36105(bin) => bin,
-            IPL3::IPL36106(bin) => bin,
-            IPL3::IPL37102(bin) => bin,
+            IPL3::IPL3_6101(bin) => bin,
+            IPL3::IPL3_6102(bin) => bin,
+            IPL3::IPL3_6103(bin) => bin,
+            IPL3::IPL3_6105(bin) => bin,
+            IPL3::IPL3_6106(bin) => bin,
+            IPL3::IPL3_7102(bin) => bin,
             IPL3::UNKNOWN(bin) => bin,
         }
     }
@@ -117,9 +117,9 @@ impl IPL3 {
 
         // Initial checksum value
         let checksum = match self {
-            IPL3::IPL36103(_) => 0xa3886759,
-            IPL3::IPL36105(_) => 0xdf26f436,
-            IPL3::IPL36106(_) => 0x1fea617a,
+            IPL3::IPL3_6103(_) => 0xa3886759,
+            IPL3::IPL3_6105(_) => 0xdf26f436,
+            IPL3::IPL3_6106(_) => 0x1fea617a,
             _ => 0xf8ca4ddc,
         };
 
@@ -167,7 +167,7 @@ impl IPL3 {
 
             // Advance accumulator 6
             match self {
-                IPL3::IPL36105(_) => {
+                IPL3::IPL3_6105(_) => {
                     let current_ipl = ipl.next().unwrap();
                     let current_ipl = Wrapping(BigEndian::read_u32(&current_ipl));
                     acc6 += current ^ current_ipl;
@@ -179,8 +179,8 @@ impl IPL3 {
         }
 
         let (crc1, crc2) = match self {
-            IPL3::IPL36103(_) => ((acc1 ^ acc2) + acc3, (acc4 ^ acc5) + acc6),
-            IPL3::IPL36106(_) => (acc1 * acc2 + acc3, acc4 * acc5 + acc6),
+            IPL3::IPL3_6103(_) => ((acc1 ^ acc2) + acc3, (acc4 ^ acc5) + acc6),
+            IPL3::IPL3_6106(_) => (acc1 * acc2 + acc3, acc4 * acc5 + acc6),
             _ => (acc1 ^ acc2 ^ acc3, acc4 ^ acc5 ^ acc6),
         };
 
@@ -190,8 +190,8 @@ impl IPL3 {
     /// Offset the entry point for the current IPL3
     crate fn offset(&self, entry_point: u32) -> u32 {
         entry_point + match self {
-            IPL3::IPL36103(_) => 0x00100000,
-            IPL3::IPL36106(_) => 0x00200000,
+            IPL3::IPL3_6103(_) => 0x00100000,
+            IPL3::IPL3_6106(_) => 0x00200000,
             _ => 0,
         }
     }
@@ -202,8 +202,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn crc_ipl36101() {
-        let ipl3 = IPL3::IPL36101([0; IPL_SIZE]);
+    fn crc_ipl3_6101() {
+        let ipl3 = IPL3::IPL3_6101([0; IPL_SIZE]);
         let program: Vec<u8> = (0..PROGRAM_SIZE).map(|i| i as u8).collect();
 
         let (crc1, crc2) = ipl3.compute_crcs(&program, &[]);
@@ -213,8 +213,8 @@ mod tests {
     }
 
     #[test]
-    fn crc_ipl36102() {
-        let ipl3 = IPL3::IPL36102([0; IPL_SIZE]);
+    fn crc_ipl3_6102() {
+        let ipl3 = IPL3::IPL3_6102([0; IPL_SIZE]);
         let program: Vec<u8> = (0..PROGRAM_SIZE).map(|i| i as u8).collect();
 
         let (crc1, crc2) = ipl3.compute_crcs(&program, &[]);
@@ -224,8 +224,8 @@ mod tests {
     }
 
     #[test]
-    fn crc_ipl36103() {
-        let ipl3 = IPL3::IPL36103([0; IPL_SIZE]);
+    fn crc_ipl3_6103() {
+        let ipl3 = IPL3::IPL3_6103([0; IPL_SIZE]);
         let program: Vec<u8> = (0..PROGRAM_SIZE).map(|i| i as u8).collect();
 
         let (crc1, crc2) = ipl3.compute_crcs(&program, &[]);
@@ -235,8 +235,8 @@ mod tests {
     }
 
     #[test]
-    fn crc_ipl36105() {
-        let ipl3 = IPL3::IPL36105([0; IPL_SIZE]);
+    fn crc_ipl3_6105() {
+        let ipl3 = IPL3::IPL3_6105([0; IPL_SIZE]);
         let program: Vec<u8> = (0..PROGRAM_SIZE).map(|i| i as u8).collect();
 
         let (crc1, crc2) = ipl3.compute_crcs(&program, &[]);
@@ -246,8 +246,8 @@ mod tests {
     }
 
     #[test]
-    fn crc_ipl36106() {
-        let ipl3 = IPL3::IPL36106([0; IPL_SIZE]);
+    fn crc_ipl3_6106() {
+        let ipl3 = IPL3::IPL3_6106([0; IPL_SIZE]);
         let program: Vec<u8> = (0..PROGRAM_SIZE).map(|i| i as u8).collect();
 
         let (crc1, crc2) = ipl3.compute_crcs(&program, &[]);
@@ -257,8 +257,8 @@ mod tests {
     }
 
     #[test]
-    fn crc_ipl37102() {
-        let ipl3 = IPL3::IPL37102([0; IPL_SIZE]);
+    fn crc_ipl3_7102() {
+        let ipl3 = IPL3::IPL3_7102([0; IPL_SIZE]);
         let program: Vec<u8> = (0..PROGRAM_SIZE).map(|i| i as u8).collect();
 
         let (crc1, crc2) = ipl3.compute_crcs(&program, &[]);
@@ -268,38 +268,38 @@ mod tests {
     }
 
     #[test]
-    fn offset_ipl36101() {
-        let ipl3 = IPL3::IPL36101([0; IPL_SIZE]);
+    fn offset_ipl3_6101() {
+        let ipl3 = IPL3::IPL3_6101([0; IPL_SIZE]);
         assert_eq!(ipl3.offset(0x80000400), 0x80000400);
     }
 
     #[test]
-    fn offset_ipl36102() {
-        let ipl3 = IPL3::IPL36102([0; IPL_SIZE]);
+    fn offset_ipl3_6102() {
+        let ipl3 = IPL3::IPL3_6102([0; IPL_SIZE]);
         assert_eq!(ipl3.offset(0x80000400), 0x80000400);
     }
 
     #[test]
-    fn offset_ipl36103() {
-        let ipl3 = IPL3::IPL36103([0; IPL_SIZE]);
+    fn offset_ipl3_6103() {
+        let ipl3 = IPL3::IPL3_6103([0; IPL_SIZE]);
         assert_eq!(ipl3.offset(0x80000400), 0x80100400);
     }
 
     #[test]
-    fn offset_ipl36105() {
-        let ipl3 = IPL3::IPL36105([0; IPL_SIZE]);
+    fn offset_ipl3_6105() {
+        let ipl3 = IPL3::IPL3_6105([0; IPL_SIZE]);
         assert_eq!(ipl3.offset(0x80000400), 0x80000400);
     }
 
     #[test]
-    fn offset_ipl36106() {
-        let ipl3 = IPL3::IPL36106([0; IPL_SIZE]);
+    fn offset_ipl3_6106() {
+        let ipl3 = IPL3::IPL3_6106([0; IPL_SIZE]);
         assert_eq!(ipl3.offset(0x80000400), 0x80200400);
     }
 
     #[test]
-    fn offset_ipl37102() {
-        let ipl3 = IPL3::IPL37102([0; IPL_SIZE]);
+    fn offset_ipl3_7102() {
+        let ipl3 = IPL3::IPL3_7102([0; IPL_SIZE]);
         assert_eq!(ipl3.offset(0x80000400), 0x80000400);
     }
 }
