@@ -2,7 +2,7 @@
 name = "cargo-n64"
 version = "0.1.0"
 authors = ["Jay Oster <jay@kodewerx.org>"]
-repository = "https://github.com/parasyte/cargo-n64"
+repository = "https://github.com/rust-console/cargo-n64"
 license = "MIT"
 categories = ["command-line-utilities", "development-tools", "embedded"]
 keywords = ["cli", "cross", "compilation", "nintendo", "n64"]
