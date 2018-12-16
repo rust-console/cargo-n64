@@ -96,7 +96,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
     };
 
     // Process common arguments
-    while let Some(arg) = args.next() {
+    for arg in args {
         if arg == "--help" || arg == "-h" {
             eprintln!(include_str!("templates/help.fmt"), target);
             process::exit(0);
@@ -109,10 +109,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
     }
 
     // Check subcommand after handling --help and --version
-    match subcommand {
-        Subcommand::None => Err(MissingSubcommand)?,
-        _ => (),
-    }
+    if let Subcommand::None = subcommand { Err(MissingSubcommand)? }
 
     Ok(Args {
         subcommand,

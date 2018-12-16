@@ -45,7 +45,7 @@ impl N64Header {
         name.copy_from_slice(name_str.as_bytes());
         let name = name;
 
-        let cart_id_str = "KW".as_bytes(); // KodeWerx!
+        let cart_id_str = b"KW"; // KodeWerx!
         let mut cart_id = [0; 2];
         cart_id.copy_from_slice(cart_id_str);
         let cart_id = cart_id;
@@ -68,9 +68,9 @@ impl N64Header {
             // 0x20
             name,
             _reserved_2: [0; 7],
-            manufacturer: 'N' as u8, // Nintendo
+            manufacturer: b'N', // Nintendo
             cart_id,
-            region_code: 'E' as u8, // USA/English
+            region_code: b'E', // USA/English
             _reserved_3: 0,
         }
     }

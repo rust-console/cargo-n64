@@ -1,3 +1,4 @@
+#![deny(clippy::all)]
 #![feature(crate_visibility_modifier)]
 #![feature(transpose_result)]
 #![feature(try_trait)]
@@ -160,7 +161,7 @@ fn build(args: Args) -> Result<(), BuildError> {
     let artifact = cargo::run("release", &args)?;
 
     // Set default program name
-    if args.name.len() == 0 {
+    if args.name.is_empty() {
         args.name = artifact.target.name;
     }
     let args = args;

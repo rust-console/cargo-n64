@@ -88,7 +88,7 @@ crate fn run(profile: &str, args: &cli::BuildArgs) -> Result<CargoArtifact, Subc
         // Failed build
         let (_artifacts, errors): (Vec<&str>, Vec<&str>) = json
             .trim()
-            .split("\n")
+            .split('\n')
             .partition(|x| x.find(r#""reason":"compiler-artifact""#).is_some());
         print_messages(errors)?;
 
@@ -96,11 +96,11 @@ crate fn run(profile: &str, args: &cli::BuildArgs) -> Result<CargoArtifact, Subc
     }
 }
 
-fn parse_artifact<'a>(json: &'a str) -> Result<CargoArtifact, SubcommandError> {
+fn parse_artifact(json: &str) -> Result<CargoArtifact, SubcommandError> {
     // Warnings need to be handled separately
     let (artifacts, warnings): (Vec<&str>, Vec<&str>) = json
         .trim()
-        .split("\n")
+        .split('\n')
         .partition(|x| x.find(r#""reason":"compiler-artifact""#).is_some());
     print_messages(warnings)?;
 

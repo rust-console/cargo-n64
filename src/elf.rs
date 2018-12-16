@@ -59,7 +59,7 @@ crate fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
     let section = dump_section(&elf, &data, ".boot")?;
 
     // Validate the .boot section
-    if (section.header.sh_flags & section_header::SHF_EXECINSTR as u64) == 0 {
+    if (section.header.sh_flags & u64::from(section_header::SHF_EXECINSTR)) == 0 {
         Err(DumpError(format!(
             "Non-executable .boot section: {}",
             section.header.sh_flags
@@ -99,7 +99,7 @@ crate fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
     Ok((elf.header.e_entry as u32, binary))
 }
 
-fn validate<'a>(elf: &'a Elf<'_>) -> Result<(), ElfError> {
+fn validate(elf: &Elf<'_>) -> Result<(), ElfError> {
     use self::ElfError::DumpError;
     use goblin::elf::header;
 
@@ -111,7 +111,7 @@ fn validate<'a>(elf: &'a Elf<'_>) -> Result<(), ElfError> {
         let e = format!("Unexpected ELF machine: {}", elf.header.e_machine);
         Err(DumpError(e))?;
     }
-    if elf.header.e_entry > u32::max_value() as u64 {
+    if elf.header.e_entry > u64::from(u32::max_value()) {
         let e = format!("Entry point out if range: {}", elf.header.e_entry);
         Err(DumpError(e))?;
     }
@@ -121,7 +121,7 @@ fn validate<'a>(elf: &'a Elf<'_>) -> Result<(), ElfError> {
             elf.little_endian
         )))?;
     }
-    if elf.section_headers.len() == 0 {
+    if elf.section_headers.is_empty() {
         Err(DumpError("Missing ELF section headers".into()))?;
     }
 
@@ -139,7 +139,7 @@ fn dump_section<'a>(
     let header = elf
         .section_headers
         .iter()
-        .find(|&&ref h| {
+        .find(|&h| {
             let sh_name = elf
                 .shdr_strtab
                 .get(h.sh_name)
@@ -148,14 +148,14 @@ fn dump_section<'a>(
 
             sh_name == name
         })
-        .ok_or(DumpError(format!("Could not find {} section", name)))?;
+        .ok_or_else(|| DumpError(format!("Could not find {} section", name)))?;
 
     // Get section data
     let start = header.sh_offset as usize;
     let end = start + header.sh_size as usize;
     let binary = data
         .get(start..end)
-        .ok_or(DumpError("Index out of range".into()))?;
+        .ok_or_else(|| DumpError("Index out of range".into()))?;
 
     Ok(SectionInfo { header, binary })
 }
