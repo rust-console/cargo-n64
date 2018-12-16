@@ -69,7 +69,7 @@ struct CargoMessageMessage {
     rendered: String,
 }
 
-crate fn run(profile: &str, args: &cli::Args) -> Result<CargoArtifact, SubcommandError> {
+crate fn run(profile: &str, args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
     let verbose = args.verbose();
     let output = Command::new("cargo")
         .arg("xbuild")

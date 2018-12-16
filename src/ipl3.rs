@@ -68,7 +68,10 @@ impl IPL3 {
         let metadata = f.metadata()?;
         let len = metadata.len();
         if len as usize != IPL_SIZE {
-            Err(IPL3Error::IPL3ReadError(format!("Expected file size {}, found {}", IPL_SIZE, len)))?;
+            Err(IPL3Error::IPL3ReadError(format!(
+                "Expected file size {}, found {}",
+                IPL_SIZE, len
+            )))?;
         }
 
         // Read file contents
@@ -189,11 +192,12 @@ impl IPL3 {
 
     /// Offset the entry point for the current IPL3
     crate fn offset(&self, entry_point: u32) -> u32 {
-        entry_point + match self {
-            IPL3::IPL3_6103(_) => 0x00100000,
-            IPL3::IPL3_6106(_) => 0x00200000,
-            _ => 0,
-        }
+        entry_point
+            + match self {
+                IPL3::IPL3_6103(_) => 0x00100000,
+                IPL3::IPL3_6106(_) => 0x00200000,
+                _ => 0,
+            }
     }
 }
 

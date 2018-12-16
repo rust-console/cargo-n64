@@ -147,7 +147,8 @@ fn dump_section<'a>(
                 .unwrap_or("");
 
             sh_name == name
-        }).ok_or(DumpError(format!("Could not find {} section", name)))?;
+        })
+        .ok_or(DumpError(format!("Could not find {} section", name)))?;
 
     // Get section data
     let start = header.sh_offset as usize;

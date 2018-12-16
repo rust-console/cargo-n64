@@ -54,13 +54,19 @@ crate enum Subcommand {
 crate struct Args {
     crate subcommand: Subcommand,
     crate target: String,
+    crate rest: Vec<String>,
+}
+
+#[derive(Debug)]
+crate struct BuildArgs {
+    crate target: String,
     crate name: String,
     crate fs: Option<String>,
     crate ipl3: IPL3,
     crate rest: Vec<String>,
 }
 
-impl Args {
+impl BuildArgs {
     crate fn verbose(&self) -> bool {
         self.rest
             .iter()
@@ -76,10 +82,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
         Err(CargoSubcommand)?;
     }
 
-    let mut target = create_target()?;
-    let mut name = String::new();
-    let mut fs = None;
-    let mut ipl3 = None;
+    let target = create_target()?;
     let mut rest: Vec<String> = Vec::new();
 
     // Peek at the first arg to select the command
@@ -92,22 +95,50 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
         _ => Subcommand::None,
     };
 
-    // Process arguments
+    // Process common arguments
     while let Some(arg) = args.next() {
         if arg == "--help" || arg == "-h" {
-            eprintln!(
-                include_str!("templates/help.fmt"),
-                target,
-            );
+            eprintln!(include_str!("templates/help.fmt"), target);
             process::exit(0);
         } else if arg == "--version" || arg == "-V" {
             eprintln!("Version {}", env!("CARGO_PKG_VERSION"));
             process::exit(0);
-        } else if arg.starts_with("--target") {
+        } else {
+            rest.push(arg.to_owned());
+        }
+    }
+
+    // Check subcommand after handling --help and --version
+    match subcommand {
+        Subcommand::None => Err(MissingSubcommand)?,
+        _ => (),
+    }
+
+    Ok(Args {
+        subcommand,
+        target,
+        rest,
+    })
+}
+
+crate fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
+    use self::ArgParseError::*;
+
+    let mut target = args.target;
+    let mut name = String::new();
+    let mut fs = None;
+    let mut ipl3 = None;
+    let mut rest: Vec<String> = Vec::new();
+
+    let mut args = args.rest.iter();
+
+    // Process build subcommand arguments
+    while let Some(arg) = args.next() {
+        if arg.starts_with("--target") {
             if let Some("=") = arg.get(8..9) {
                 target = arg[9..].to_owned();
             } else if let Some(arg) = args.next() {
-                target = arg;
+                target = arg.to_owned();
             } else {
                 Err(MissingTargetValue)?;
             }
@@ -115,7 +146,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
             if let Some("=") = arg.get(6..7) {
                 name = arg[7..].to_owned();
             } else if let Some(arg) = args.next() {
-                name = arg;
+                name = arg.to_owned();
             } else {
                 Err(MissingNameValue)?;
             }
@@ -123,7 +154,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
             let path = if let Some("=") = arg.get(4..5) {
                 arg[5..].to_owned()
             } else if let Some(arg) = args.next() {
-                arg
+                arg.to_owned()
             } else {
                 return Err(MissingFSValue);
             };
@@ -143,20 +174,13 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
                 return Err(MissingIPL3Value);
             });
         } else {
-            rest.push(arg);
+            rest.push(arg.to_owned());
         }
     }
 
     let ipl3 = ipl3.ok_or(MissingIPL3Value)?;
 
-    // Check subcommand after handling --help and --version
-    match subcommand {
-        Subcommand::None => Err(MissingSubcommand)?,
-        _ => (),
-    }
-
-    Ok(Args {
-        subcommand,
+    Ok(BuildArgs {
         target,
         name,
         fs,

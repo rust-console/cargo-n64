@@ -5,11 +5,11 @@
 #![warn(rust_2018_idioms)]
 
 mod cargo;
-mod ipl3;
 mod cli;
 mod elf;
 mod fs;
 mod header;
+mod ipl3;
 
 use colored::Colorize;
 use failure::Fail;
@@ -20,11 +20,35 @@ use std::process;
 use std::time::Instant;
 
 use crate::cargo::SubcommandError;
-use crate::cli::{ArgParseError, Args};
+use crate::cli::{ArgParseError, Args, BuildArgs};
 use crate::elf::ElfError;
 use crate::fs::FSError;
 use crate::header::{N64Header, HEADER_SIZE};
 use crate::ipl3::{IPL_SIZE, PROGRAM_SIZE};
+
+#[derive(Debug, Fail)]
+pub enum RunError {
+    #[fail(display = "Argument parsing error")]
+    ArgParseError(#[cause] ArgParseError),
+
+    #[fail(display = "Error running subcommand")]
+    UnknownSubcommand,
+
+    #[fail(display = "Build error")]
+    BuildError(#[cause] BuildError),
+}
+
+impl From<ArgParseError> for RunError {
+    fn from(e: ArgParseError) -> Self {
+        RunError::ArgParseError(e)
+    }
+}
+
+impl From<BuildError> for RunError {
+    fn from(e: BuildError) -> Self {
+        RunError::BuildError(e)
+    }
+}
 
 #[derive(Debug, Fail)]
 pub enum BuildError {
@@ -111,10 +135,26 @@ where
     };
 }
 
-pub fn build() -> Result<(), BuildError> {
+/// This is the entrypoint. It is responsible for parsing the cli args common to
+/// all subcommands, and ultimately executing the requested subcommand.
+pub fn run() -> Result<(), RunError> {
+    use self::RunError::*;
+
+    let args = cli::parse_args()?;
+    match args.subcommand {
+        cli::Subcommand::Build => build(args)?,
+        _ => Err(UnknownSubcommand)?,
+    }
+
+    Ok(())
+}
+
+/// The build subcommand. Parses cli args specific to build, executes
+/// `cargo xbuild`, and transforms the ELF to a ROM file.
+fn build(args: Args) -> Result<(), BuildError> {
     use self::BuildError::*;
 
-    let mut args = cli::parse_args()?;
+    let mut args = cli::parse_build_args(args)?;
 
     eprintln!("{:>12} with cargo xbuild", "Building".green().bold());
     let artifact = cargo::run("release", &args)?;
@@ -160,7 +200,7 @@ pub fn build() -> Result<(), BuildError> {
 /// file system (FAT image) is appended to the ROM image if provided.
 fn create_rom_image(
     path: PathBuf,
-    args: &Args,
+    args: &BuildArgs,
     entry_point: u32,
     program: Vec<u8>,
     fs: Option<Vec<u8>>,
