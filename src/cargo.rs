@@ -86,22 +86,24 @@ crate fn run(profile: &str, args: &cli::BuildArgs) -> Result<CargoArtifact, Subc
         parse_artifact(&json)
     } else {
         // Failed build
-        let (_artifacts, errors): (Vec<&str>, Vec<&str>) = json
-            .trim()
-            .split('\n')
-            .partition(|x| x.find(r#""reason":"compiler-artifact""#).is_some());
+        let (_artifacts, errors) = split_output(&json);
         print_messages(errors)?;
 
         Err(SubcommandError::CommandError(output.status.code()))
     }
 }
 
-fn parse_artifact(json: &str) -> Result<CargoArtifact, SubcommandError> {
-    // Warnings need to be handled separately
-    let (artifacts, warnings): (Vec<&str>, Vec<&str>) = json
+fn split_output(json: &str) -> (Vec<&str>, Vec<&str>) {
+    json
         .trim()
         .split('\n')
-        .partition(|x| x.find(r#""reason":"compiler-artifact""#).is_some());
+        .filter(|x| x.find(r#""reason":"build-script-executed""#).is_none())
+        .partition(|x| x.find(r#""reason":"compiler-artifact""#).is_some())
+}
+
+fn parse_artifact(json: &str) -> Result<CargoArtifact, SubcommandError> {
+    // Warnings need to be handled separately
+    let (artifacts, warnings) = split_output(json);
     print_messages(warnings)?;
 
     // Return build artifact
