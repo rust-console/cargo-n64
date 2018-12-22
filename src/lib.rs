@@ -105,6 +105,15 @@ impl From<FSError> for BuildError {
     }
 }
 
+fn print_backtrace(error: &dyn Fail) {
+    if let Some(backtrace) = error.backtrace() {
+        let backtrace = backtrace.to_string();
+        if backtrace != "" {
+            eprintln!("{}", backtrace);
+        }
+    }
+}
+
 pub fn handle_errors<F, R>(run: R)
 where
     F: Fail,
@@ -115,13 +124,11 @@ where
     match run() {
         Err(e) => {
             eprintln!("{} {}", "error:".red(), e);
+            print_backtrace(&e);
 
             for cause in Fail::iter_causes(&e) {
                 eprintln!("{} {}", "caused by:".bright_red(), cause);
-            }
-
-            if let Some(backtrace) = e.backtrace() {
-                eprintln!("{:?}", backtrace);
+                print_backtrace(cause);
             }
 
             process::exit(1);
