@@ -69,9 +69,9 @@ crate fn create_filesystem(fs_path: impl AsRef<Path>) -> Result<Vec<u8>, FSError
     })?;
 
     // Create a new in-memory volume
-    let mut stream = Cursor::new(Vec::<u8>::with_capacity(size));
+    let mut stream = Cursor::new(vec![0; size]);
     let opts = {
-        let opts = FormatVolumeOptions::new((size / 512) as u32, 512);
+        let opts = FormatVolumeOptions::new();
         opts.volume_label(*b"TECHNEKDISK")
     };
     fatfs::format_volume(&mut stream, opts)?;
