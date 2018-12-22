@@ -196,7 +196,7 @@ fn build(args: Args) -> Result<(), BuildError> {
                 fs_path,
             );
 
-            fs::create_filesystem(&fs_path)
+            fs::create_filesystem(fs_path)
         })
         .transpose()?;
 
