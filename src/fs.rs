@@ -1,6 +1,6 @@
 use fatfs::{self, FileSystem, FormatVolumeOptions, FsOptions};
-use std::fs::{metadata, read_dir, DirEntry, File};
-use std::io::{self, Cursor, Read, Write};
+use std::fs::{self, metadata, read_dir, DirEntry};
+use std::io::{self, Cursor, Write};
 use std::path::{Path, StripPrefixError};
 
 use failure::Fail;
@@ -89,10 +89,8 @@ crate fn create_filesystem(fs_path: impl AsRef<Path>) -> Result<Vec<u8>, FSError
             if entry.file_type()?.is_dir() {
                 root_dir.create_dir(name)?;
             } else {
-                let mut src = File::open(&path)?;
+                let buffer = fs::read(&path)?;
                 let mut dest = root_dir.create_file(name)?;
-                let mut buffer = Vec::new();
-                src.read_to_end(&mut buffer)?;
                 dest.write_all(&buffer)?;
             }
 

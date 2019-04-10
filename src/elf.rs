@@ -3,8 +3,8 @@ use goblin::elf::section_header::SectionHeader;
 use goblin::elf::Elf;
 use goblin::error::Error as GoblinError;
 use goblin::Object;
-use std::fs::File;
-use std::io::{self, Read};
+use std::fs;
+use std::io;
 
 #[derive(Debug, Fail)]
 pub enum ElfError {
@@ -40,10 +40,7 @@ crate fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
     use goblin::elf::section_header;
 
     // Read the file
-    let mut file = File::open(filename)?;
-    let mut data: Vec<u8> = Vec::new();
-    file.read_to_end(&mut data)?;
-    let data = data;
+    let data = fs::read(filename)?;
 
     // Parse it
     let elf = match Object::parse(&data) {

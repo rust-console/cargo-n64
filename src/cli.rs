@@ -87,7 +87,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
 
     // Peek at the first arg to select the command
     let mut args = args.peekable();
-    let subcommand = match args.peek().map(|s| s.as_str()) {
+    let subcommand = match args.peek().map(String::as_str) {
         Some("build") => {
             args.next();
             Subcommand::Build
