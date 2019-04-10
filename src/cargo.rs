@@ -1,5 +1,5 @@
 use failure::Fail;
-use serde_derive::Deserialize;
+use serde::Deserialize;
 use serde_json::Error as JsonError;
 use std::io;
 use std::process::{Command, Output, Stdio};

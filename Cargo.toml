@@ -13,14 +13,13 @@ edition = "2018"
 lto = true
 
 [dependencies]
-byteorder = "1.2"
-colored = "1.6"
-crc32fast = "1.1"
+byteorder = "1.3"
+colored = "1.7"
+crc32fast = "1.2"
 failure = "0.1"
 failure_derive = "0.1"
-fatfs = { git = "https://github.com/rafalh/rust-fatfs.git", rev = "131f047c91825434921c4c79ee88be0c5881ad02" }
-goblin = "0.0.19"
-itertools = "0.7"
-serde = "1.0"
+fatfs = "0.3"
+goblin = "0.0.21"
+itertools = "0.8"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_derive = "1.0"
