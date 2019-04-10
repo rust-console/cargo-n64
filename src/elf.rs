@@ -2,7 +2,6 @@ use failure::Fail;
 use goblin::elf::section_header::SectionHeader;
 use goblin::elf::Elf;
 use goblin::error::Error as GoblinError;
-use goblin::Object;
 use std::fs;
 use std::io;
 
@@ -43,11 +42,7 @@ crate fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
     let data = fs::read(filename)?;
 
     // Parse it
-    let elf = match Object::parse(&data) {
-        Ok(Object::Elf(o)) => o,
-        Ok(e) => Err(DumpError(format!("Unexpected format: {:?}", e)))?,
-        Err(e) => Err(e)?,
-    };
+    let elf = Elf::parse(&data)?;
 
     // Do some basic validation
     validate(&elf)?;

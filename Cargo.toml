@@ -9,6 +9,9 @@ categories = ["command-line-utilities", "development-tools", "embedded"]
 keywords = ["cli", "cross", "compilation", "nintendo", "n64"]
 edition = "2018"
 
+[profile.release]
+lto = true
+
 [dependencies]
 byteorder = "1.2"
 colored = "1.6"
