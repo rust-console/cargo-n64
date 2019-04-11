@@ -98,10 +98,18 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
     // Process common arguments
     for arg in args {
         if arg == "--help" || arg == "-h" {
-            eprintln!(include_str!("templates/help.fmt"), target);
+            eprintln!(
+                include_str!("templates/help.fmt"),
+                env!("CARGO_PKG_NAME"),
+                target
+            );
             process::exit(0);
         } else if arg == "--version" || arg == "-V" {
-            eprintln!("Version {}", env!("CARGO_PKG_VERSION"));
+            eprintln!(
+                "{}\nVersion {}",
+                env!("CARGO_PKG_NAME"),
+                env!("CARGO_PKG_VERSION")
+            );
             process::exit(0);
         } else {
             rest.push(arg.to_owned());
@@ -109,7 +117,9 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
     }
 
     // Check subcommand after handling --help and --version
-    if let Subcommand::None = subcommand { Err(MissingSubcommand)? }
+    if let Subcommand::None = subcommand {
+        Err(MissingSubcommand)?
+    }
 
     Ok(Args {
         subcommand,
