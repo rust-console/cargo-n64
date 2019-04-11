@@ -164,7 +164,7 @@ fn build(args: Args) -> Result<(), BuildError> {
     let mut args = cli::parse_build_args(args)?;
 
     eprintln!("{:>12} with cargo xbuild", "Building".green().bold());
-    let artifact = cargo::run("release", &args)?;
+    let artifact = cargo::run(&args)?;
 
     // Set default program name
     if args.name.is_empty() {

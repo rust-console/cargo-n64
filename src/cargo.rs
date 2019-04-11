@@ -69,14 +69,25 @@ struct CargoMessageMessage {
     rendered: String,
 }
 
-crate fn run(profile: &str, args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
+crate fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
     let verbose = args.verbose();
+
+    // Add --release flag if necessary
+    let build_args = {
+        let release_flag = "--release".to_owned();
+
+        let mut args = args.rest.clone();
+        if !args.contains(&release_flag) {
+            args.push(release_flag);
+        }
+        args
+    };
+
     let output = Command::new("cargo")
         .arg("xbuild")
         .arg("--message-format=json")
-        .arg(format!("--{}", profile))
         .arg(format!("--target={}", args.target))
-        .args(args.rest.clone())
+        .args(build_args)
         .stderr(Stdio::inherit())
         .run(verbose)?;
 
