@@ -71,10 +71,7 @@ pub fn draw_str(mut x: usize, mut y: usize, color: u16, string: &str) {
 fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
     let frame_buffer = vi::next_buffer() as usize;
 
-    let index = GLYPHS
-        .iter()
-        .position(|c| *c == ch)
-        .unwrap_or(UNKNOWN);
+    let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
     let mut address = GLYPH_ADDR + index * GLYPH_SIZE;
     let mut shift = (4 - (address & 3)) * 8 - 1;
