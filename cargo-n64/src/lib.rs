@@ -173,18 +173,15 @@ fn build(args: Args) -> Result<(), BuildError> {
     let args = args;
 
     eprintln!("{:>12} ELF to binary", "Dumping".green().bold());
-    let filename = artifact
-        .filenames
-        .first()
-        .expect("Cargo build message is missing build artifacts");
-    let (entry_point, program) = elf::dump(filename)?;
+    let filename = artifact.executable;
+    let (entry_point, program) = elf::dump(&filename)?;
 
     // XXX: See https://github.com/parasyte/technek/issues/1
     if program.len() > 1024 * 1024 {
         Err(ProgramTooBigError)?;
     }
 
-    let path = get_output_filename(filename)?;
+    let path = get_output_filename(&filename)?;
     let fs = args
         .fs
         .as_ref()

@@ -50,7 +50,7 @@ impl Runner for Command {
 
 #[derive(Deserialize, Debug)]
 crate struct CargoArtifact {
-    crate filenames: Vec<String>,
+    crate executable: String,
     crate target: CargoArtifactTarget,
 }
 
