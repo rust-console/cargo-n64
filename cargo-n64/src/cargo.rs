@@ -108,10 +108,10 @@ fn split_output(json: &str) -> (Vec<&str>, Vec<&str>) {
     json.trim()
         .split('\n')
         .filter(|x| {
-            !x.is_empty() &&
-            !x.starts_with("#") &&
-            x.find("] cargo:").is_none() &&
-            x.find(r#""reason":"build-script-executed""#).is_none()
+            !x.is_empty()
+                && !x.starts_with("#")
+                && x.find("] cargo:").is_none()
+                && x.find(r#""reason":"build-script-executed""#).is_none()
         })
         .partition(|x| x.find(r#""reason":"compiler-artifact""#).is_some())
 }
