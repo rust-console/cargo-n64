@@ -12,7 +12,7 @@ pub const WIDTH: usize = 13;
 pub const HEIGHT: usize = 14;
 
 /// Glyphs available in the embedded font
-const GLYPHS: &'static [u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
+const GLYPHS: &[u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
 
 /// Glyph index for rendering "unknown" characters
 /// Unknown characters are rendered with the "?" glyph

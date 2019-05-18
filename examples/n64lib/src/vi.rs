@@ -13,7 +13,7 @@ pub const FRAME_BUFFER_SIZE: usize = WIDTH * HEIGHT * 2;
 
 const VI_BASE: usize = 0xA440_0000;
 
-const VI_STATUS: *mut u32 = (VI_BASE + 0x00) as *mut u32;
+const VI_STATUS: *mut u32 = VI_BASE as *mut u32;
 const VI_DRAM_ADDR: *mut usize = (VI_BASE + 0x04) as *mut usize;
 const VI_H_WIDTH: *mut u32 = (VI_BASE + 0x08) as *mut u32;
 const VI_V_INTR: *mut u32 = (VI_BASE + 0x0C) as *mut u32;

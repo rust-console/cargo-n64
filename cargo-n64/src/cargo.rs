@@ -109,7 +109,7 @@ fn split_output(json: &str) -> (Vec<&str>, Vec<&str>) {
         .split('\n')
         .filter(|x| {
             !x.is_empty()
-                && !x.starts_with("#")
+                && !x.starts_with('#')
                 && x.find("] cargo:").is_none()
                 && x.find(r#""reason":"build-script-executed""#).is_none()
         })
