@@ -4,8 +4,4 @@ version = "0.1.0"
 authors = ["Jay Oster <jay@kodewerx.org>"]
 edition = "2018"
 
-[lib]
-test = false
-doctest = false
-
 [dependencies]
