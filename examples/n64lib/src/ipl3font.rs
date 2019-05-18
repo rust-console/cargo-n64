@@ -15,7 +15,7 @@ pub const HEIGHT: usize = 14;
 const GLYPHS: &'static [u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
 
 /// Glyph index for rendering "unknown" characters
-/// Unkown characters are rendered with the "?" glyph
+/// Unknown characters are rendered with the "?" glyph
 const UNKNOWN: usize = 48;
 
 /// Glyph size (in bytes)
