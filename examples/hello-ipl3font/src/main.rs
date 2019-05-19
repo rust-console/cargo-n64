@@ -9,7 +9,8 @@ pub use rrt0::panic;
 use n64lib::{ipl3font, vi};
 
 // Colors are 5:5:5:1 RGB with a 16-bit color depth.
-const WHITE: u16 = 0b1111_1111_1111_1111;
+#[allow(clippy::inconsistent_digit_grouping)]
+const WHITE: u16 = 0b11111_11111_11111_1;
 
 fn main() {
     vi::init();
@@ -17,5 +18,6 @@ fn main() {
     ipl3font::draw_str_centered(WHITE, "Hello, world!");
     vi::swap_buffer();
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
