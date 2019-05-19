@@ -4,7 +4,7 @@
 // Pull panic into scope
 // Required by panic_handler
 #[cfg(not(test))]
-pub use rrt0::panic;
+pub use rrt0;
 
 use n64lib::{ipl3font, vi};
 
