@@ -150,6 +150,7 @@ pub fn run() -> Result<(), RunError> {
     let args = cli::parse_args()?;
     match args.subcommand {
         cli::Subcommand::Build => build(args)?,
+        cli::Subcommand::Test => test()?,
         _ => return Err(UnknownSubcommand),
     }
 
@@ -198,6 +199,11 @@ fn build(args: Args) -> Result<(), BuildError> {
 
     eprintln!("{:>12} final ROM image", "Building".green().bold());
     create_rom_image(path, &args, entry_point, program, fs)
+}
+
+fn test() -> Result<(), BuildError> {
+    println!("Unit test not implemented here yet.");
+    Ok(())
 }
 
 /// Creates a ROM image, generating the header and IPL3 from `args`. An optional
