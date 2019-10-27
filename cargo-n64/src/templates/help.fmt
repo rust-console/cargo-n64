@@ -3,6 +3,7 @@ Nintendo 64 build tool
 
 USAGE:
     cargo n64 build [OPTIONS]
+    cargo n64 test  [OPTIONS]
 
 OPTIONS:
     -h, --help          Print help info and exit
