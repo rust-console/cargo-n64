@@ -48,6 +48,7 @@ impl From<IPL3Error> for ArgParseError {
 crate enum Subcommand {
     None,
     Build,
+    Test,
 }
 
 #[derive(Debug)]
@@ -91,6 +92,10 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
         Some("build") => {
             args.next();
             Subcommand::Build
+        }
+        Some("test") => {
+            args.next();
+            Subcommand::Test
         }
         _ => Subcommand::None,
     };
