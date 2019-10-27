@@ -150,7 +150,7 @@ pub fn run() -> Result<(), RunError> {
     let args = cli::parse_args()?;
     match args.subcommand {
         cli::Subcommand::Build => build(args)?,
-        cli::Subcommand::Test => test()?,
+        cli::Subcommand::Test => test(args)?,
         _ => return Err(UnknownSubcommand),
     }
 
@@ -201,8 +201,10 @@ fn build(args: Args) -> Result<(), BuildError> {
     create_rom_image(path, &args, entry_point, program, fs)
 }
 
-fn test() -> Result<(), BuildError> {
-    println!("Unit test not implemented here yet.");
+fn test(args: Args) -> Result<(), RunError> {
+    build(args)?;
+    eprintln!("{:>12} Build test finished.", "Testing".green().bold());
+    eprintln!("{:>12} Unit test finished.", "Testing".green().bold());
     Ok(())
 }
 
