@@ -79,7 +79,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
 
     let mut args = env::args().skip(1);
     if args.next() != Some("n64".to_owned()) {
-        Err(CargoSubcommand)?;
+        return Err(CargoSubcommand);
     }
 
     let target = create_target()?;
@@ -118,7 +118,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
 
     // Check subcommand after handling --help and --version
     if let Subcommand::None = subcommand {
-        Err(MissingSubcommand)?
+        return Err(MissingSubcommand);
     }
 
     Ok(Args {
@@ -147,7 +147,7 @@ crate fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
             } else if let Some(arg) = args.next() {
                 target = arg.to_owned();
             } else {
-                Err(MissingTargetValue)?;
+                return Err(MissingTargetValue);
             }
         } else if arg.starts_with("--name") {
             if let Some("=") = arg.get(6..7) {
@@ -155,7 +155,7 @@ crate fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
             } else if let Some(arg) = args.next() {
                 name = arg.to_owned();
             } else {
-                Err(MissingNameValue)?;
+                return Err(MissingNameValue);
             }
         } else if arg.starts_with("--fs") {
             let path = if let Some("=") = arg.get(4..5) {
@@ -168,7 +168,7 @@ crate fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
 
             let stat = fs::metadata(&path).map_err(|_| InvalidFSValue)?;
             if !stat.is_dir() {
-                Err(InvalidFSValue)?;
+                return Err(InvalidFSValue);
             }
 
             fs = Some(path);

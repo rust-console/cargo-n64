@@ -52,15 +52,15 @@ crate fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
 
     // Validate the .boot section
     if (section.header.sh_flags & u64::from(section_header::SHF_EXECINSTR)) == 0 {
-        Err(DumpError(format!(
+        return Err(DumpError(format!(
             "Non-executable .boot section: {}",
             section.header.sh_flags
-        )))?;
+        )));
     }
     if section.header.sh_addr != elf.header.e_entry {
-        Err(DumpError(
+        return Err(DumpError(
             "First byte of .boot section must be program entry point".into(),
-        ))?;
+        ));
     }
 
     let mut binary = section.binary.to_vec();
@@ -97,24 +97,24 @@ fn validate(elf: &Elf<'_>) -> Result<(), ElfError> {
 
     if elf.header.e_type != header::ET_EXEC {
         let e = format!("Unexpected ELF type: {}", elf.header.e_type);
-        Err(DumpError(e))?;
+        return Err(DumpError(e));
     }
     if elf.header.e_machine != header::EM_MIPS {
         let e = format!("Unexpected ELF machine: {}", elf.header.e_machine);
-        Err(DumpError(e))?;
+        return Err(DumpError(e));
     }
     if elf.header.e_entry > u64::from(u32::max_value()) {
         let e = format!("Entry point out if range: {}", elf.header.e_entry);
-        Err(DumpError(e))?;
+        return Err(DumpError(e));
     }
     if elf.little_endian {
-        Err(DumpError(format!(
+        return Err(DumpError(format!(
             "Unexpected ELF endianness: {}",
             elf.little_endian
-        )))?;
+        )));
     }
     if elf.section_headers.is_empty() {
-        Err(DumpError("Missing ELF section headers".into()))?;
+        return Err(DumpError("Missing ELF section headers".into()));
     }
 
     Ok(())
