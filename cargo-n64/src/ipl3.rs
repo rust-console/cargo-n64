@@ -68,10 +68,10 @@ impl IPL3 {
         let metadata = f.metadata()?;
         let len = metadata.len();
         if len as usize != IPL_SIZE {
-            Err(IPL3Error::IPL3ReadError(format!(
+            return Err(IPL3Error::IPL3ReadError(format!(
                 "Expected file size {}, found {}",
                 IPL_SIZE, len
-            )))?;
+            )));
         }
 
         // Read file contents

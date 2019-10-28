@@ -17,7 +17,7 @@ crc32fast = "1.2"
 failure = "0.1"
 failure_derive = "0.1"
 fatfs = "0.3"
-goblin = "0.0.21"
+goblin = "0.0.24"
 itertools = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

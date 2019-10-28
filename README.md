@@ -4,23 +4,19 @@ A `cargo` subcommand to build Nintendo 64 ROMs in Rust! 🦀
 
 ## Installation
 
-Requires Rust nightly. You can use `rustup` to install the toolchain:
-
-```bash
-rustup toolchain install nightly
-```
+Requires Rust nightly. `cargo` will automatically install the correct version of the nightly compiler, based on the `rust-toolchain` file.
 
 Install dependencies:
 
 ```bash
-rustup run nightly rustup component add rust-src
-cargo +nightly install cargo-xbuild
+rustup component add rust-src
+cargo install cargo-xbuild
 ```
 
 Install `cargo-n64`:
 
 ```bash
-cargo +nightly install cargo-n64
+cargo install cargo-n64
 ```
 
 ## What does it do?

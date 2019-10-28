@@ -150,7 +150,7 @@ pub fn run() -> Result<(), RunError> {
     let args = cli::parse_args()?;
     match args.subcommand {
         cli::Subcommand::Build => build(args)?,
-        _ => Err(UnknownSubcommand)?,
+        _ => return Err(UnknownSubcommand),
     }
 
     Ok(())
@@ -178,7 +178,7 @@ fn build(args: Args) -> Result<(), BuildError> {
 
     // XXX: See https://github.com/parasyte/technek/issues/1
     if program.len() > 1024 * 1024 {
-        Err(ProgramTooBigError)?;
+        return Err(ProgramTooBigError);
     }
 
     let path = get_output_filename(&filename)?;
