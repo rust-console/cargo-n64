@@ -11,13 +11,13 @@ matrix:
 before_script:
 - rustup component add clippy
 - rustup component add rustfmt
+- rustup component add rust-src
+- cargo install --force cargo-xbuild
 
 script:
 - cargo clippy --all -- -D warnings
 - cargo test --all
 - cargo fmt --all -- --check
-- rustup component add rust-src
-- cargo install --force cargo-xbuild
 - cargo install --force --path cargo-n64
 # Create dummy IPL3 and build the example
 - dd if=/dev/zero of=/tmp/dummy-ipl3 bs=4032 count=1
