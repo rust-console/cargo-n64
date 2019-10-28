@@ -1,0 +1,18 @@
+language: rust
+rust:
+# Nightly release channel
+- nightly
+
+cache: cargo
+
+matrix:
+  fast_finish: true
+
+before_script:
+- rustup component add clippy
+- rustup component add rustfmt
+
+script:
+- cargo clippy --all -- -D warnings
+- cargo test --all
+- cargo fmt --all -- --check
