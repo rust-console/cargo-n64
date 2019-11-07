@@ -1,5 +1,8 @@
 # `cargo-n64`
 
+[![Build Status](https://travis-ci.org/rust-console/cargo-n64.svg?branch=master)](https://travis-ci.org/rust-console/cargo-n64)
+[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
+
 A `cargo` subcommand to build Nintendo 64 ROMs in Rust! 🦀
 
 ## Installation
