@@ -12,7 +12,7 @@ before_script:
 - rustup component add clippy
 - rustup component add rustfmt
 - rustup component add rust-src
-- cargo install --force cargo-xbuild
+- cargo install --force --version=0.5.22 cargo-xbuild
 
 script:
 - cargo clippy --all -- -D warnings
