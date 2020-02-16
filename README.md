@@ -7,7 +7,9 @@ A `cargo` subcommand to build Nintendo 64 ROMs in Rust! 🦀
 
 ## Installation
 
-Requires Rust nightly. `cargo` will automatically install the correct version of the nightly compiler, based on the `rust-toolchain` file.
+Requires Rust nightly.
+
+When built from source, `cargo` will automatically install the correct version of the nightly compiler, based on the `rust-toolchain` file. However you will still need to install the `rust-src` component separately. It is recommended that you explicitly install the dependencies with the same versions used in CI, as described below.
 
 Install dependencies:
 
