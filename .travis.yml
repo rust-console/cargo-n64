@@ -1,7 +1,7 @@
 language: rust
 rust:
 # Nightly release channel
-- nightly-2019-10-24
+- nightly-2020-02-16
 
 cache: cargo
 
