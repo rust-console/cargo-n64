@@ -5,7 +5,7 @@
   "disable-redzone": true,
   "env": "unknown",
   "executables": true,
-  "features": "+mips3,+gp64,+fpxx,+nooddspreg",
+  "features": "+mips3,+gp64,+fpxx,+nooddspreg,+noabicalls",
   "linker": "rust-lld",
   "linker-flavor": "ld.lld",
   "llvm-target": "mips-unknown-unknown",
@@ -13,7 +13,10 @@
   "panic-strategy": "abort",
   "pre-link-args": {{
     "ld.lld": [
-      "--script={}"
+      "--script={linker_script}",
+      "-L{lib_path}",
+      "-lc",
+      "-lm"
     ]
   }},
   "relocation-model": "static",

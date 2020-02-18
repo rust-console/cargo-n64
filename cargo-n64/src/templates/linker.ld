@@ -21,13 +21,14 @@ SECTIONS {
     }
 
     .bss : {
-        . = ALIGN(4);
+        . = ALIGN(16);
         __bss_start = .;
         *(.bss .bss.*)
+        . = ALIGN(16);
         __bss_end = .;
     }
 
-    . = ALIGN(2);
+    . = ALIGN(16);
     __rom_end = . - __boot_start + 0xB0001000;
 
     /DISCARD/ : {
