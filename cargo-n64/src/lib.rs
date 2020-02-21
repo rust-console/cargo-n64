@@ -57,6 +57,12 @@ pub enum BuildError {
     #[fail(display = "Argument parsing error")]
     ArgParseError(#[cause] ArgParseError),
 
+    #[fail(display = "xbuild argument parsing error: {}", _0)]
+    XbuildArgParseError(String),
+
+    #[fail(display = "xbuild error: {}", _0)]
+    XbuildError(String), // `String` because `xargo_lib::Error` is private
+
     #[fail(display = "Subcommand failed")]
     SubcommandError(#[cause] SubcommandError),
 
@@ -118,7 +124,7 @@ fn print_backtrace(error: &dyn Fail) {
 pub fn handle_errors<F, R>(run: R)
 where
     F: Fail,
-    R: Fn() -> Result<(), F>,
+    R: Fn() -> Result<bool, F>,
 {
     let start = Instant::now();
 
@@ -134,20 +140,22 @@ where
 
             process::exit(1);
         }
-        Ok(()) => {
-            eprintln!(
-                "{:>12} nintendo64 target(s) in {}",
-                "Finished".green().bold(),
-                get_runtime(start)
-            );
+        Ok(print_status) => {
+            if print_status {
+                eprintln!(
+                    "{:>12} nintendo64 target(s) in {}",
+                    "Finished".green().bold(),
+                    get_runtime(start)
+                );
+            }
         }
     };
 }
 
 /// This is the entrypoint. It is responsible for parsing the cli args common to
 /// all subcommands, and ultimately executing the requested subcommand.
-pub fn run() -> Result<(), RunError> {
-    use self::RunError::*;
+pub fn run() -> Result<bool, RunError> {
+    use self::{BuildError::*, RunError::*};
 
     let args = env::args().collect::<Vec<_>>();
 
@@ -155,9 +163,14 @@ pub fn run() -> Result<(), RunError> {
     // up to date, we have cargo-xbuild as a dep, and just transfer control to it when we're being
     // invoked as such.
     if args.get(1).map(|a| a == "xbuild") == Some(true) {
-        xargo_lib::main_common("build");
+        let args = args.iter().skip(2);
+        let args =
+            xargo_lib::Args::from_raw(args).map_err(|s| RunError::from(XbuildArgParseError(s)))?;
 
-        return Ok(());
+        xargo_lib::build(args, "build", None)
+            .map_err(|e| RunError::from(XbuildError(e.to_string())))?;
+
+        return Ok(false);
     }
 
     let args = cli::parse_args()?;
@@ -166,7 +179,7 @@ pub fn run() -> Result<(), RunError> {
         _ => return Err(UnknownSubcommand),
     }
 
-    Ok(())
+    Ok(true)
 }
 
 /// The build subcommand. Parses cli args specific to build, executes
