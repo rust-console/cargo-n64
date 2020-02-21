@@ -17,7 +17,6 @@ Install dependencies:
 ```bash
 rustup toolchain install nightly-2020-02-16
 rustup run nightly-2020-02-16 -- rustup component add rust-src
-cargo install --version=0.5.22 cargo-xbuild
 ```
 
 Install `cargo-n64`:

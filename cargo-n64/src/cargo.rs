@@ -1,6 +1,7 @@
 use failure::Fail;
 use serde::Deserialize;
 use serde_json::Error as JsonError;
+use std::env;
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::string::FromUtf8Error;
@@ -20,6 +21,9 @@ pub enum SubcommandError {
 
     #[fail(display = "JSON error: {}", _1)]
     JsonError(#[cause] JsonError, String),
+
+    #[fail(display = "Couldn't get cargo-n64 executable path")]
+    ExePath(#[cause] io::Error),
 }
 
 impl From<io::Error> for SubcommandError {
@@ -83,7 +87,7 @@ crate fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
         args
     };
 
-    let output = Command::new("cargo")
+    let output = Command::new(env::current_exe().map_err(SubcommandError::ExePath)?)
         .arg("xbuild")
         .arg("--message-format=json")
         .arg(format!("--target={}", args.target))

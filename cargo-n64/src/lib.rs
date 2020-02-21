@@ -14,6 +14,7 @@ mod ipl3;
 
 use colored::Colorize;
 use failure::Fail;
+use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -147,6 +148,17 @@ where
 /// all subcommands, and ultimately executing the requested subcommand.
 pub fn run() -> Result<(), RunError> {
     use self::RunError::*;
+
+    let args = env::args().collect::<Vec<_>>();
+
+    // So users won't have to install an extra cargo command and worry about its version being
+    // up to date, we have cargo-xbuild as a dep, and just transfer control to it when we're being
+    // invoked as such.
+    if args.get(1).map(|a| a == "xbuild") == Some(true) {
+        xargo_lib::main_common("build");
+
+        return Ok(());
+    }
 
     let args = cli::parse_args()?;
     match args.subcommand {
