@@ -25,6 +25,9 @@ pub enum ArgParseError {
     #[fail(display = "Missing IPL3 value")]
     MissingIPL3Value,
 
+    #[fail(display = "Missing IPL3 from ROM value")]
+    MissingIPL3FromRomValue,
+
     #[fail(display = "Missing name value")]
     MissingNameValue,
 
@@ -172,6 +175,14 @@ crate fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
             }
 
             fs = Some(path);
+        } else if arg.starts_with("--ipl3-from-rom") {
+            ipl3 = Some(if let Some("=") = arg.get(15..16) {
+                IPL3::read_from_rom(&arg[16..])?
+            } else if let Some(arg) = args.next() {
+                IPL3::read_from_rom(&arg)?
+            } else {
+                return Err(MissingIPL3FromRomValue);
+            });
         } else if arg.starts_with("--ipl3") {
             ipl3 = Some(if let Some("=") = arg.get(5..6) {
                 IPL3::read(&arg[6..])?

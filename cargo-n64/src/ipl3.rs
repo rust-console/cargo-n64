@@ -2,9 +2,11 @@ use byteorder::{BigEndian, ByteOrder};
 use itertools::Itertools;
 use std::fmt;
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::{self, Read, Seek, SeekFrom};
 use std::num::Wrapping;
 use std::path::Path;
+
+use crate::header::HEADER_SIZE;
 
 use crc32fast::Hasher;
 use failure::Fail;
@@ -78,6 +80,27 @@ impl IPL3 {
         let mut ipl = [0; IPL_SIZE];
         f.read_exact(&mut ipl)?;
 
+        Self::check(ipl)
+    }
+
+    crate fn read_from_rom(path: impl AsRef<Path>) -> Result<IPL3, IPL3Error> {
+        let mut f = File::open(&path)?;
+        f.seek(SeekFrom::Start(HEADER_SIZE as u64))?;
+
+        let mut ipl = [0; IPL_SIZE];
+
+        if f.read(&mut ipl)? != IPL_SIZE {
+            return Err(IPL3Error::IPL3ReadError(format!(
+                "Couldn't read full all {} IPL3 bytes from ROM \"{}\".",
+                IPL_SIZE,
+                path.as_ref().display()
+            )));
+        }
+
+        Self::check(ipl)
+    }
+
+    fn check(ipl: [u8; IPL_SIZE]) -> Result<IPL3, IPL3Error> {
         // Check for known IPLs
         let mut hasher = Hasher::new();
         hasher.update(&ipl);
