@@ -44,7 +44,7 @@ extern "C" {
 #[no_mangle]
 extern "C" fn sbrk(increment: usize) -> *const u8 {
     unsafe {
-        static mut PTR: &'static u8 = unsafe { &__bss_end };
+        static mut PTR: &u8 = unsafe { &__bss_end };
 
         PTR = (PTR as *const u8).add(increment).as_ref().unwrap();
 
