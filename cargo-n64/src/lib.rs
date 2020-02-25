@@ -14,9 +14,8 @@ mod ipl3;
 
 use colored::Colorize;
 use failure::Fail;
+use std::cmp;
 use std::env;
-use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 use std::process;
 use std::time::Instant;
@@ -237,41 +236,34 @@ fn create_rom_image(
 ) -> Result<(), BuildError> {
     use self::BuildError::*;
 
-    let fs = if let Some(fs) = fs { fs } else { Vec::new() };
+    let fs = fs.unwrap_or_default();
 
-    let mut file =
-        File::create(&path).map_err(|_| CreateFileError(path.to_string_lossy().to_string()))?;
+    let mut rom = [
+        &N64Header::new(entry_point, &args.name, &program, &fs, &args.ipl3).to_vec()[..],
+        args.ipl3.get_ipl(),
+        &program,
+        &fs,
+    ]
+    .iter()
+    .fold(Vec::new(), |mut acc, cur| {
+        acc.extend_from_slice(cur);
 
-    let header = N64Header::new(entry_point, &args.name, &program, &fs, &args.ipl3).to_vec();
-    file.write_all(&header)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
+        acc
+    });
 
-    let ipl = args.ipl3.get_ipl();
-    file.write_all(ipl)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
+    // Note: removed earlier multiple-of-2 alignment here, as this is now taken care of in the
+    // linker script (with 16 byte alignment instead).
 
-    file.write_all(&program)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
+    let min_rom_size = PROGRAM_SIZE + HEADER_SIZE + IPL_SIZE;
+    let size_to_pad = cmp::max(min_rom_size, rom.len());
 
-    let padding_length = (2 - (program.len() & 1)) & 1;
-    let padding = [0; 1];
-    file.write_all(&padding[0..padding_length])
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
+    // Align & pad ROM to the next power of 2
+    rom.resize(
+        1 << (0usize.leading_zeros() - 1 - size_to_pad.leading_zeros() + 1),
+        0xFF,
+    );
 
-    file.write_all(&fs)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
-
-    let rom_length = HEADER_SIZE + IPL_SIZE + program.len() + padding_length + fs.len();
-    const ROM_SIZE: usize = PROGRAM_SIZE + HEADER_SIZE + IPL_SIZE;
-    if rom_length < ROM_SIZE {
-        let padding = std::iter::repeat(0)
-            .take(ROM_SIZE - rom_length)
-            .collect::<Vec<u8>>();
-        file.write_all(&padding)
-            .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
-    }
-
-    // TODO: Padding up to nearest 4 KB?
+    std::fs::write(&path, &rom).map_err(|_| CreateFileError(path.to_string_lossy().to_string()))?;
 
     Ok(())
 }

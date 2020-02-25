@@ -6,28 +6,31 @@ SECTIONS {
 
     .boot : {
         *(.boot)
+        . = ALIGN(16);
     }
 
     .text : {
         *(.text .text.*)
+        . = ALIGN(16);
     }
 
     .rodata : {
         *(.rodata .rodata.*)
+        . = ALIGN(16);
     }
 
     .data : {
         *(.data .data.*)
+        . = ALIGN(16);
     }
 
     .bss : {
-        . = ALIGN(4);
         __bss_start = .;
         *(.bss .bss.*)
+        . = ALIGN(16);
         __bss_end = .;
     }
 
-    . = ALIGN(2);
     __rom_end = . - __boot_start + 0xB0001000;
 
     /DISCARD/ : {
