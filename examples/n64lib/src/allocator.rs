@@ -3,7 +3,7 @@ use core::alloc::{GlobalAlloc, Layout};
 
 #[link(name = "c")]
 extern "C" {
-    fn malloc(size: usize) -> *mut u8;
+    fn memalign(align: usize, size: usize) -> *mut u8;
     fn free(ptr: *mut u8);
 }
 
@@ -13,7 +13,7 @@ unsafe impl GlobalAlloc for N64LibAlloc {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let _lock = interrupt_lock();
 
-        malloc(layout.size())
+        memalign(layout.align(), layout.size())
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
