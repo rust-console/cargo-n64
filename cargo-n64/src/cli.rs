@@ -16,7 +16,7 @@ pub enum ArgParseError {
     #[fail(display = "Error creating target or linker script: {}", _0)]
     TargetCreationError(String),
 
-    #[fail(display = "Error writing libc.a to {}: {}", _0, _1)]
+    #[fail(display = "Error writing library to {}: {}", _0, _1)]
     LibWriteError(String, String),
 
     #[fail(display = "Error writing target or linker script: {}", _0)]
@@ -223,10 +223,7 @@ fn create_target() -> Result<String, ArgParseError> {
     fs::create_dir_all(&path).map_err(|_| TargetCreationError(path_to_string(&path)))?;
 
     // Write newlib builds so that they can be linked in
-    for (name, data) in &[
-        ("libc.a", &include_bytes!("../newlib/libc.a")[..]),
-        ("libm.a", &include_bytes!("../newlib/libm.a")[..]),
-    ] {
+    for (name, data) in &[("libc.a", &include_bytes!("../newlib/libc.a")[..])] {
         let lib_path = path.join(name);
 
         fs::write(&lib_path, data)

@@ -15,8 +15,7 @@
     "ld.lld": [
       "--script={linker_script}",
       "-L{lib_path}",
-      "-lc",
-      "-lm"
+      "-lc"
     ]
   }},
   "relocation-model": "static",
