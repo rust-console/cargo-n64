@@ -16,6 +16,9 @@ pub enum ArgParseError {
     #[fail(display = "Error creating target or linker script: {}", _0)]
     TargetCreationError(String),
 
+    #[fail(display = "Error writing library to {}: {}", _0, _1)]
+    LibWriteError(String, String),
+
     #[fail(display = "Error writing target or linker script: {}", _0)]
     TargetWriteError(String),
 
@@ -205,35 +208,47 @@ crate fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
 /// it needs a path reference to the linker script.
 fn create_target() -> Result<String, ArgParseError> {
     // Sad, but this little helper function really simplifies the error handling
-    fn path_to_string(path: &std::path::Path) -> String {
-        path.to_string_lossy().to_string().replace("\\", "/")
+    fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> String {
+        path.as_ref()
+            .to_string_lossy()
+            .to_string()
+            .replace("\\", "/")
     }
 
     use self::ArgParseError::*;
 
-    let mut path = env::temp_dir();
-    path.push("n64-build");
+    let path = env::temp_dir().join("n64-build");
 
     // Create our temporary sub-directory for storing the target files
     fs::create_dir_all(&path).map_err(|_| TargetCreationError(path_to_string(&path)))?;
 
+    // Write newlib builds so that they can be linked in
+    for (name, data) in &[("libc.a", &include_bytes!("../newlib/libc.a")[..])] {
+        let lib_path = path.join(name);
+
+        fs::write(&lib_path, data)
+            .map_err(|e| LibWriteError(path_to_string(&lib_path), e.to_string()))?;
+    }
+
     // Create the linker script first
-    let mut linker_script = path.to_path_buf();
-    linker_script.push("linker.ld");
+    let linker_script = path.join("linker.ld");
+
     let mut file = File::create(&linker_script)
         .map_err(|_| TargetCreationError(path_to_string(&linker_script)))?;
     file.write_all(include_bytes!("templates/linker.ld"))
         .map_err(|_| TargetWriteError(path_to_string(&linker_script)))?;
 
     // Create the target spec next
-    path.push("mips-nintendo64-none.json");
-    let mut file = File::create(&path).map_err(|_| TargetCreationError(path_to_string(&path)))?;
+    let target_json = path.join("mips-nintendo64-none.json");
+    let mut file =
+        File::create(&target_json).map_err(|_| TargetCreationError(path_to_string(&path)))?;
     let data = format!(
         include_str!("templates/mips-nintendo64-none.fmt"),
-        path_to_string(&linker_script)
+        linker_script = path_to_string(&linker_script),
+        lib_path = path_to_string(&path),
     );
     file.write_all(data.as_bytes())
-        .map_err(|_| TargetWriteError(path_to_string(&path)))?;
+        .map_err(|_| TargetWriteError(path_to_string(&target_json)))?;
 
-    Ok(path_to_string(&path))
+    Ok(path_to_string(&target_json))
 }
