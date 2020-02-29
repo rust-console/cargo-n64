@@ -1,4 +1,5 @@
 use crate::lock::interrupt_lock;
+use crate::util;
 use core::alloc::{GlobalAlloc, Layout};
 
 #[link(name = "c")]
@@ -27,8 +28,9 @@ unsafe impl GlobalAlloc for N64LibAlloc {
 static GLOBAL: N64LibAlloc = N64LibAlloc;
 
 #[alloc_error_handler]
+#[inline(never)]
 fn alloc_error(_layout: Layout) -> ! {
-    loop {}
+    util::loop_forever();
 }
 
 extern "C" {
