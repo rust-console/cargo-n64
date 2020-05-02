@@ -65,7 +65,7 @@ crate struct CargoArtifactTarget {
 
 #[derive(Deserialize, Debug)]
 struct CargoMessage {
-    message: CargoMessageMessage,
+    message: Option<CargoMessageMessage>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -98,9 +98,11 @@ crate fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
     let json = String::from_utf8(output.stdout)?;
     if output.status.success() {
         // Successful build
+
         parse_artifact(&json)
     } else {
         // Failed build
+
         let (_artifacts, errors) = split_output(&json);
         print_messages(errors)?;
 
@@ -138,8 +140,10 @@ where
         let message: CargoMessage =
             serde_json::from_str(s).map_err(|e| SubcommandError::JsonError(e, s.into()))?;
 
-        // TODO: Add highlighting
-        eprintln!("{}", message.message.rendered);
+        if let Some(message) = message.message {
+            // TODO: Add highlighting
+            eprintln!("{}", message.rendered);
+        }
     }
 
     Ok(())
