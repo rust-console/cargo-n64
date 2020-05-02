@@ -98,11 +98,9 @@ crate fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
     let json = String::from_utf8(output.stdout)?;
     if output.status.success() {
         // Successful build
-
         parse_artifact(&json)
     } else {
         // Failed build
-
         let (_artifacts, errors) = split_output(&json);
         print_messages(errors)?;
 
