@@ -14,9 +14,8 @@ mod ipl3;
 
 use colored::Colorize;
 use failure::Fail;
+use std::cmp;
 use std::env;
-use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 use std::process;
 use std::time::Instant;
@@ -226,52 +225,58 @@ fn build(args: Args) -> Result<(), BuildError> {
     create_rom_image(path, &args, entry_point, program, fs)
 }
 
+const PAD_BYTE: u8 = 0xFF;
+const MULTIPLE: usize = 4 * 1024 * 1024;
+
+/// Pads the program to its minimum required size for CRC calculation
+fn pad_program(program: &mut Vec<u8>) {
+    program.resize(cmp::max(PROGRAM_SIZE, program.len()), PAD_BYTE);
+}
+
+/// Pads the ROM to a power of 2, or a multiple of 4 MiB. Whichever is smallest.
+fn pad_rom(rom: &mut Vec<u8>) {
+    let size = cmp::max(HEADER_SIZE + IPL_SIZE + PROGRAM_SIZE, rom.len()) as f64;
+
+    let by_power_of_2 = 2.0f64.powf(size.log2().ceil());
+    let by_multiple = (size / MULTIPLE as f64).ceil() * MULTIPLE as f64;
+
+    rom.resize(
+        cmp::min(by_power_of_2 as usize, by_multiple as usize),
+        PAD_BYTE,
+    );
+}
+
 /// Creates a ROM image, generating the header and IPL3 from `args`. An optional
 /// file system (FAT image) is appended to the ROM image if provided.
 fn create_rom_image(
     path: PathBuf,
     args: &BuildArgs,
     entry_point: u32,
-    program: Vec<u8>,
+    mut program: Vec<u8>,
     fs: Option<Vec<u8>>,
 ) -> Result<(), BuildError> {
     use self::BuildError::*;
 
-    let fs = if let Some(fs) = fs { fs } else { Vec::new() };
+    let fs = fs.unwrap_or_default();
 
-    let mut file =
-        File::create(&path).map_err(|_| CreateFileError(path.to_string_lossy().to_string()))?;
+    pad_program(&mut program);
 
-    let header = N64Header::new(entry_point, &args.name, &program, &fs, &args.ipl3).to_vec();
-    file.write_all(&header)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
+    let mut rom = [
+        &N64Header::new(entry_point, &args.name, &program, &fs, &args.ipl3).to_vec()[..],
+        args.ipl3.get_ipl(),
+        &program,
+        &fs,
+    ]
+    .iter()
+    .fold(Vec::new(), |mut acc, cur| {
+        acc.extend_from_slice(cur);
 
-    let ipl = args.ipl3.get_ipl();
-    file.write_all(ipl)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
+        acc
+    });
 
-    file.write_all(&program)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
+    pad_rom(&mut rom);
 
-    let padding_length = (2 - (program.len() & 1)) & 1;
-    let padding = [0; 1];
-    file.write_all(&padding[0..padding_length])
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
-
-    file.write_all(&fs)
-        .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
-
-    let rom_length = HEADER_SIZE + IPL_SIZE + program.len() + padding_length + fs.len();
-    const ROM_SIZE: usize = PROGRAM_SIZE + HEADER_SIZE + IPL_SIZE;
-    if rom_length < ROM_SIZE {
-        let padding = std::iter::repeat(0)
-            .take(ROM_SIZE - rom_length)
-            .collect::<Vec<u8>>();
-        file.write_all(&padding)
-            .map_err(|_| WriteFileError(path.to_string_lossy().to_string()))?;
-    }
-
-    // TODO: Padding up to nearest 4 KB?
+    std::fs::write(&path, &rom).map_err(|_| CreateFileError(path.to_string_lossy().to_string()))?;
 
     Ok(())
 }
@@ -296,4 +301,61 @@ fn get_output_filename(filename: &str) -> Result<PathBuf, BuildError> {
 fn get_runtime(start: Instant) -> String {
     let total = start.elapsed();
     format!("{}.{}s", total.as_secs(), total.subsec_millis())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::ipl3::PROGRAM_SIZE;
+    use crate::{pad_program, pad_rom, PAD_BYTE};
+
+    #[test]
+    fn test_program_pad() {
+        let mut program = Vec::new();
+
+        pad_program(&mut program);
+
+        assert_eq!(vec![PAD_BYTE; PROGRAM_SIZE], program);
+    }
+
+    #[test]
+    fn test_rom_pad_power_of_two() {
+        let mut rom = Vec::new();
+
+        pad_rom(&mut rom);
+
+        assert_eq!(vec![PAD_BYTE; 2 * 1024 * 1024], rom);
+    }
+
+    #[test]
+    fn test_rom_pad_multiple_of() {
+        let mut rom = vec![0; 9 * 1024 * 1024];
+        let expected_size = 12 * 1024 * 1024;
+        let expected_padding = expected_size - rom.len();
+
+        pad_rom(&mut rom);
+
+        assert_eq!(rom.len(), expected_size);
+        assert_eq!(
+            &vec![PAD_BYTE; expected_padding][..],
+            &rom[(rom.len() - expected_padding)..]
+        );
+    }
+
+    #[test]
+    fn test_rom_pad_already_power_of_2() {
+        let mut rom = vec![0; 2 * 1024 * 1024];
+
+        pad_rom(&mut rom);
+
+        assert_eq!(vec![0; 2 * 1024 * 1024], rom);
+    }
+
+    #[test]
+    fn test_rom_already_multiple_of() {
+        let mut rom = vec![0; 12 * 1024 * 1024];
+
+        pad_rom(&mut rom);
+
+        assert_eq!(vec![0; 12 * 1024 * 1024], rom);
+    }
 }
