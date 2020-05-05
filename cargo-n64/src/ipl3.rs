@@ -91,7 +91,7 @@ impl IPL3 {
 
         if f.read(&mut ipl)? != IPL_SIZE {
             return Err(IPL3Error::IPL3ReadError(format!(
-                "Couldn't read full all {} IPL3 bytes from ROM \"{}\".",
+                "Couldn't read all {} IPL3 bytes from ROM \"{}\".",
                 IPL_SIZE,
                 path.as_ref().display()
             )));
