@@ -65,7 +65,7 @@ crate struct CargoArtifactTarget {
 
 #[derive(Deserialize, Debug)]
 struct CargoMessage {
-    message: CargoMessageMessage,
+    message: Option<CargoMessageMessage>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -138,8 +138,10 @@ where
         let message: CargoMessage =
             serde_json::from_str(s).map_err(|e| SubcommandError::JsonError(e, s.into()))?;
 
-        // TODO: Add highlighting
-        eprintln!("{}", message.message.rendered);
+        if let Some(message) = message.message {
+            // TODO: Add highlighting
+            eprintln!("{}", message.rendered);
+        }
     }
 
     Ok(())
