@@ -16,8 +16,11 @@ pub enum SubcommandError {
     #[fail(display = "Command failed with exit code: {:?}", _0)]
     CommandError(Option<i32>),
 
-    #[fail(display = "Command failed with I/O error")]
+    #[fail(display = "Command failed with UTF-8 error")]
     Utf8Error(#[cause] FromUtf8Error),
+
+    #[fail(display = "Command failed with environment error")]
+    VarError(#[cause] env::VarError),
 
     #[fail(display = "JSON error: {}", _1)]
     JsonError(#[cause] JsonError, String),
@@ -35,6 +38,12 @@ impl From<io::Error> for SubcommandError {
 impl From<FromUtf8Error> for SubcommandError {
     fn from(e: FromUtf8Error) -> Self {
         SubcommandError::Utf8Error(e)
+    }
+}
+
+impl From<env::VarError> for SubcommandError {
+    fn from(e: env::VarError) -> Self {
+        SubcommandError::VarError(e)
     }
 }
 
@@ -75,6 +84,18 @@ struct CargoMessageMessage {
 
 crate fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
     let verbose = args.verbose();
+
+    // Add -Clinker-plugin-lto if necessary
+    let rustflags = env::var("RUSTFLAGS")
+        .and_then(|mut var| {
+            var.push_str(" -Clinker-plugin-lto");
+            Ok(var)
+        })
+        .or_else(|e| match e {
+            env::VarError::NotPresent => Ok(String::from("-Clinker-plugin-lto")),
+            e => Err(e),
+        })?;
+    env::set_var("RUSTFLAGS", rustflags);
 
     // Add --release flag if necessary
     let build_args = {

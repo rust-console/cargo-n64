@@ -229,7 +229,7 @@ fn create_target() -> Result<String, ArgParseError> {
     fs::create_dir_all(&path).map_err(|_| TargetCreationError(path_to_string(&path)))?;
 
     // Create the linker script first
-    let mut linker_script = path.to_path_buf();
+    let mut linker_script = path.clone();
     linker_script.push("linker.ld");
     let mut file = File::create(&linker_script)
         .map_err(|_| TargetCreationError(path_to_string(&linker_script)))?;

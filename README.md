@@ -15,11 +15,17 @@ When built from source, `cargo` will automatically install the correct version o
 Install dependencies:
 
 ```bash
-rustup toolchain install nightly-2020-02-16
-rustup run nightly-2020-02-16 -- rustup component add rust-src
+rustup toolchain install $(cat rust-toolchain)
+rustup run $(cat rust-toolchain) -- rustup component add rust-src
 ```
 
-Install `cargo-n64`:
+Install `cargo-n64` from source:
+
+```bash
+cargo install --path cargo-n64
+```
+
+Install `cargo-n64` from [crates.io](https://crates.io/):
 
 ```bash
 cargo install cargo-n64
