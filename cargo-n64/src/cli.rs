@@ -1,50 +1,43 @@
-use failure::Fail;
+use crate::ipl3::{IPL3Error, IPL3};
 use std::fs::{self, File};
 use std::io::Write;
 use std::{env, process};
+use thiserror::Error;
 
-use crate::ipl3::{IPL3Error, IPL3};
-
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum ArgParseError {
-    #[fail(display = "Must be invoked as cargo subcommand: `cargo n64`")]
+    #[error("Must be invoked as cargo subcommand: `cargo n64`")]
     CargoSubcommand,
 
-    #[fail(display = "Missing subcommand, e.g. `cargo n64 build`")]
+    #[error("Missing subcommand, e.g. `cargo n64 build`")]
     MissingSubcommand,
 
-    #[fail(display = "Error creating target or linker script: {}", _0)]
+    #[error("Error creating target or linker script: {0}")]
     TargetCreationError(String),
 
-    #[fail(display = "Error writing target or linker script: {}", _0)]
+    #[error("Error writing target or linker script: {0}")]
     TargetWriteError(String),
 
-    #[fail(display = "Missing target value")]
+    #[error("Missing target value")]
     MissingTargetValue,
 
-    #[fail(display = "Missing IPL3 value")]
+    #[error("Missing IPL3 value")]
     MissingIPL3Value,
 
-    #[fail(display = "Missing IPL3 from ROM value")]
+    #[error("Missing IPL3 from ROM value")]
     MissingIPL3FromRomValue,
 
-    #[fail(display = "Missing name value")]
+    #[error("Missing name value")]
     MissingNameValue,
 
-    #[fail(display = "Missing FS value")]
+    #[error("Missing FS value")]
     MissingFSValue,
 
-    #[fail(display = "FS value must be a path to a readable directory")]
+    #[error("FS value must be a path to a readable directory")]
     InvalidFSValue,
 
-    #[fail(display = "IPL3 error")]
-    IPL3Error(#[cause] IPL3Error),
-}
-
-impl From<IPL3Error> for ArgParseError {
-    fn from(e: IPL3Error) -> Self {
-        ArgParseError::IPL3Error(e)
-    }
+    #[error("IPL3 error")]
+    IPL3Error(#[from] IPL3Error),
 }
 
 #[derive(Debug)]
