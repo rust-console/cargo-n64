@@ -2,10 +2,10 @@ use byteorder::{BigEndian, WriteBytesExt};
 
 use crate::ipl3::IPL3;
 
-crate const HEADER_SIZE: usize = 0x40;
+pub(crate) const HEADER_SIZE: usize = 0x40;
 
 #[derive(Debug, Clone, Copy)]
-crate struct N64Header {
+pub(crate) struct N64Header {
     // 0x00
     device_latency: u8,             // PI_BSD_DOM1_LAT_REG
     device_rw_pulse_width: u8,      // PI_BSD_DOM1_PWD_REG
@@ -30,7 +30,7 @@ crate struct N64Header {
 }
 
 impl N64Header {
-    crate fn new(
+    pub(crate) fn new(
         entry_point: u32,
         name_str: &str,
         program: &[u8],
@@ -75,7 +75,7 @@ impl N64Header {
         }
     }
 
-    crate fn to_vec(&self) -> Vec<u8> {
+    pub(crate) fn to_vec(&self) -> Vec<u8> {
         let mut buffer = Vec::new();
 
         // 0x00

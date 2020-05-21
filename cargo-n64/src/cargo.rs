@@ -43,14 +43,14 @@ impl Runner for Command {
 }
 
 #[derive(Deserialize, Debug)]
-crate struct CargoArtifact {
-    crate executable: String,
-    crate target: CargoArtifactTarget,
+pub(crate) struct CargoArtifact {
+    pub(crate) executable: String,
+    pub(crate) target: CargoArtifactTarget,
 }
 
 #[derive(Deserialize, Debug)]
-crate struct CargoArtifactTarget {
-    crate name: String,
+pub(crate) struct CargoArtifactTarget {
+    pub(crate) name: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -63,7 +63,7 @@ struct CargoMessageMessage {
     rendered: String,
 }
 
-crate fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
+pub(crate) fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
     let verbose = args.verbose();
 
     // Add -Clinker-plugin-lto if necessary

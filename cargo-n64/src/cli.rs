@@ -41,36 +41,36 @@ pub enum ArgParseError {
 }
 
 #[derive(Debug)]
-crate enum Subcommand {
+pub(crate) enum Subcommand {
     None,
     Build,
 }
 
 #[derive(Debug)]
-crate struct Args {
-    crate subcommand: Subcommand,
-    crate target: String,
-    crate rest: Vec<String>,
+pub(crate) struct Args {
+    pub(crate) subcommand: Subcommand,
+    pub(crate) target: String,
+    pub(crate) rest: Vec<String>,
 }
 
 #[derive(Debug)]
-crate struct BuildArgs {
-    crate target: String,
-    crate name: String,
-    crate fs: Option<String>,
-    crate ipl3: IPL3,
-    crate rest: Vec<String>,
+pub(crate) struct BuildArgs {
+    pub(crate) target: String,
+    pub(crate) name: String,
+    pub(crate) fs: Option<String>,
+    pub(crate) ipl3: IPL3,
+    pub(crate) rest: Vec<String>,
 }
 
 impl BuildArgs {
-    crate fn verbose(&self) -> bool {
+    pub(crate) fn verbose(&self) -> bool {
         self.rest
             .iter()
             .any(|a| a == "--verbose" || a == "-v" || a == "-vv")
     }
 }
 
-crate fn parse_args() -> Result<Args, ArgParseError> {
+pub(crate) fn parse_args() -> Result<Args, ArgParseError> {
     use self::ArgParseError::*;
 
     let mut args = env::args().skip(1);
@@ -124,7 +124,7 @@ crate fn parse_args() -> Result<Args, ArgParseError> {
     })
 }
 
-crate fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
+pub(crate) fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
     use self::ArgParseError::*;
 
     let mut target = args.target;
