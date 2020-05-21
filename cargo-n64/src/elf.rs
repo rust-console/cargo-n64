@@ -1,32 +1,20 @@
-use failure::Fail;
 use goblin::elf::section_header::SectionHeader;
 use goblin::elf::Elf;
 use goblin::error::Error as GoblinError;
 use std::fs;
 use std::io;
+use thiserror::Error;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum ElfError {
-    #[fail(display = "I/O error")]
-    IoError(#[cause] io::Error),
+    #[error("I/O error")]
+    IoError(#[from] io::Error),
 
-    #[fail(display = "ELF parsing error")]
-    GoblinError(#[cause] GoblinError),
+    #[error("ELF parsing error")]
+    GoblinError(#[from] GoblinError),
 
-    #[fail(display = "Dump error: {}", _0)]
+    #[error("Dump error: {}", _0)]
     DumpError(String),
-}
-
-impl From<io::Error> for ElfError {
-    fn from(e: io::Error) -> Self {
-        ElfError::IoError(e)
-    }
-}
-
-impl From<GoblinError> for ElfError {
-    fn from(e: GoblinError) -> Self {
-        ElfError::GoblinError(e)
-    }
 }
 
 crate struct SectionInfo<'a> {

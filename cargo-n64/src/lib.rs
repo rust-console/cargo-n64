@@ -1,4 +1,5 @@
 #![deny(clippy::all)]
+#![feature(backtrace)]
 #![feature(crate_visibility_modifier)]
 #![feature(try_trait)]
 #![feature(wrapping_int_impl)]
@@ -12,106 +13,72 @@ mod fs;
 mod header;
 mod ipl3;
 
-use colored::Colorize;
-use failure::Fail;
-use std::cmp;
-use std::env;
-use std::path::PathBuf;
-use std::process;
-use std::time::Instant;
-
 use crate::cargo::SubcommandError;
 use crate::cli::{ArgParseError, Args, BuildArgs};
 use crate::elf::ElfError;
 use crate::fs::FSError;
 use crate::header::{N64Header, HEADER_SIZE};
 use crate::ipl3::{IPL_SIZE, PROGRAM_SIZE};
+use colored::Colorize;
+use error_iter::ErrorIter;
+use std::cmp;
+use std::env;
+use std::path::PathBuf;
+use std::process;
+use std::time::Instant;
+use thiserror::Error;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum RunError {
-    #[fail(display = "Argument parsing error")]
-    ArgParseError(#[cause] ArgParseError),
+    #[error("Argument parsing error")]
+    ArgParseError(#[from] ArgParseError),
 
-    #[fail(display = "Error running subcommand")]
+    #[error("Error running subcommand")]
     UnknownSubcommand,
 
-    #[fail(display = "Build error")]
-    BuildError(#[cause] BuildError),
+    #[error("Build error")]
+    BuildError(#[from] BuildError),
 }
 
-impl From<ArgParseError> for RunError {
-    fn from(e: ArgParseError) -> Self {
-        RunError::ArgParseError(e)
-    }
-}
+impl ErrorIter for RunError {}
 
-impl From<BuildError> for RunError {
-    fn from(e: BuildError) -> Self {
-        RunError::BuildError(e)
-    }
-}
-
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum BuildError {
-    #[fail(display = "Argument parsing error")]
-    ArgParseError(#[cause] ArgParseError),
+    #[error("Argument parsing error")]
+    ArgParseError(#[from] ArgParseError),
 
-    #[fail(display = "xbuild argument parsing error: {}", _0)]
+    #[error("xbuild argument parsing error: {0}")]
     XbuildArgParseError(String),
 
-    #[fail(display = "xbuild error: {}", _0)]
+    #[error("xbuild error: {0}")]
     XbuildError(String), // `String` because `xargo_lib::Error` is private
 
-    #[fail(display = "Subcommand failed")]
-    SubcommandError(#[cause] SubcommandError),
+    #[error("Subcommand failed")]
+    SubcommandError(#[from] SubcommandError),
 
-    #[fail(display = "Elf parsing error")]
-    ElfError(#[cause] ElfError),
+    #[error("Elf parsing error")]
+    ElfError(#[from] ElfError),
 
-    #[fail(display = "Error while creating filesystem")]
-    FSError(#[cause] FSError),
+    #[error("Error while creating filesystem")]
+    FSError(#[from] FSError),
 
-    #[fail(display = "Elf program is larger than 1MB")]
+    #[error("Elf program is larger than 1MB")]
     ProgramTooBigError,
 
-    #[fail(display = "Empty filename")]
+    #[error("Empty filename")]
     EmptyFilenameError,
 
-    #[fail(display = "Filename encoding error")]
+    #[error("Filename encoding error")]
     FilenameEncodingError,
 
-    #[fail(display = "Could not create file `{}`", _0)]
+    #[error("Could not create file `{0}`")]
     CreateFileError(String),
 
-    #[fail(display = "Could not write file `{}`", _0)]
+    #[error("Could not write file `{0}`")]
     WriteFileError(String),
 }
 
-impl From<ArgParseError> for BuildError {
-    fn from(e: ArgParseError) -> Self {
-        BuildError::ArgParseError(e)
-    }
-}
-
-impl From<SubcommandError> for BuildError {
-    fn from(e: SubcommandError) -> Self {
-        BuildError::SubcommandError(e)
-    }
-}
-
-impl From<ElfError> for BuildError {
-    fn from(e: ElfError) -> Self {
-        BuildError::ElfError(e)
-    }
-}
-
-impl From<FSError> for BuildError {
-    fn from(e: FSError) -> Self {
-        BuildError::FSError(e)
-    }
-}
-
-fn print_backtrace(error: &dyn Fail) {
+fn print_backtrace(error: &dyn std::error::Error) {
     if let Some(backtrace) = error.backtrace() {
         let backtrace = backtrace.to_string();
         if backtrace != "" {
@@ -120,10 +87,10 @@ fn print_backtrace(error: &dyn Fail) {
     }
 }
 
-pub fn handle_errors<F, R>(run: R)
+pub fn handle_errors<E, R>(run: R)
 where
-    F: Fail,
-    R: Fn() -> Result<bool, F>,
+    E: std::error::Error + ErrorIter,
+    R: Fn() -> Result<bool, E>,
 {
     let start = Instant::now();
 
@@ -132,7 +99,7 @@ where
             eprintln!("{} {}", "error:".red(), e);
             print_backtrace(&e);
 
-            for cause in Fail::iter_causes(&e) {
+            for cause in e.chain().skip(1) {
                 eprintln!("{} {}", "caused by:".bright_red(), cause);
                 print_backtrace(cause);
             }

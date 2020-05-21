@@ -2,31 +2,18 @@ use fatfs::{self, FileSystem, FormatVolumeOptions, FsOptions};
 use std::fs::{self, metadata, read_dir, DirEntry};
 use std::io::{self, Cursor, Write};
 use std::path::{Path, StripPrefixError};
+use thiserror::Error;
 
-use failure::Fail;
-
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum FSError {
-    #[fail(display = "IO Error")]
-    IOError(#[cause] io::Error),
+    #[error("IO Error")]
+    IOError(#[from] io::Error),
 
-    #[fail(display = "Error strippping path prefix")]
-    StripPrefixError(#[cause] StripPrefixError),
+    #[error("Error strippping path prefix")]
+    StripPrefixError(#[from] StripPrefixError),
 
-    #[fail(display = "Missing file name")]
+    #[error("Missing file name")]
     MissingFileName,
-}
-
-impl From<io::Error> for FSError {
-    fn from(e: io::Error) -> Self {
-        FSError::IOError(e)
-    }
-}
-
-impl From<StripPrefixError> for FSError {
-    fn from(e: StripPrefixError) -> Self {
-        FSError::StripPrefixError(e)
-    }
 }
 
 fn traverse<T>(

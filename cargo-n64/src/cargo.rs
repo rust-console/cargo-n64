@@ -1,50 +1,31 @@
-use failure::Fail;
+use crate::cli;
 use serde::Deserialize;
 use serde_json::Error as JsonError;
 use std::env;
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::string::FromUtf8Error;
+use thiserror::Error;
 
-use crate::cli;
-
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum SubcommandError {
-    #[fail(display = "Command failed with I/O error")]
-    IoError(#[cause] io::Error),
+    #[error("Command failed with I/O error")]
+    IoError(#[from] io::Error),
 
-    #[fail(display = "Command failed with exit code: {:?}", _0)]
+    #[error("Command failed with exit code: {0:?}")]
     CommandError(Option<i32>),
 
-    #[fail(display = "Command failed with UTF-8 error")]
-    Utf8Error(#[cause] FromUtf8Error),
+    #[error("Command failed with UTF-8 error")]
+    Utf8Error(#[from] FromUtf8Error),
 
-    #[fail(display = "Command failed with environment error")]
-    VarError(#[cause] env::VarError),
+    #[error("Command failed with environment error")]
+    VarError(#[from] env::VarError),
 
-    #[fail(display = "JSON error: {}", _1)]
-    JsonError(#[cause] JsonError, String),
+    #[error("JSON error: {1}")]
+    JsonError(#[source] JsonError, String),
 
-    #[fail(display = "Couldn't get cargo-n64 executable path")]
-    ExePath(#[cause] io::Error),
-}
-
-impl From<io::Error> for SubcommandError {
-    fn from(e: io::Error) -> Self {
-        SubcommandError::IoError(e)
-    }
-}
-
-impl From<FromUtf8Error> for SubcommandError {
-    fn from(e: FromUtf8Error) -> Self {
-        SubcommandError::Utf8Error(e)
-    }
-}
-
-impl From<env::VarError> for SubcommandError {
-    fn from(e: env::VarError) -> Self {
-        SubcommandError::VarError(e)
-    }
+    #[error("Couldn't get cargo-n64 executable path")]
+    ExePath(#[source] io::Error),
 }
 
 trait Runner {
