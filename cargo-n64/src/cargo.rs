@@ -91,7 +91,7 @@ crate fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
 
     let output = Command::new(env::current_exe().map_err(SubcommandError::ExePath)?)
         .arg("xbuild")
-        .arg("--message-format=json")
+        .arg("--message-format=json-render-diagnostics")
         .arg(format!("--target={}", args.target))
         .args(build_args)
         .stderr(Stdio::inherit())
@@ -141,7 +141,6 @@ where
             serde_json::from_str(s).map_err(|e| SubcommandError::JsonError(e, s.into()))?;
 
         if let Some(message) = message.message {
-            // TODO: Add highlighting
             eprintln!("{}", message.rendered);
         }
     }
