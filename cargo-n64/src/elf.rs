@@ -17,12 +17,12 @@ pub enum ElfError {
     DumpError(String),
 }
 
-crate struct SectionInfo<'a> {
+pub(crate) struct SectionInfo<'a> {
     header: &'a SectionHeader,
     binary: &'a [u8],
 }
 
-crate fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
+pub(crate) fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
     use self::ElfError::DumpError;
     use goblin::elf::section_header;
 

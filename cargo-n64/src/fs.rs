@@ -36,7 +36,7 @@ fn traverse<T>(
     Ok(acc)
 }
 
-crate fn create_filesystem(fs_path: impl AsRef<Path>) -> Result<Vec<u8>, FSError> {
+pub(crate) fn create_filesystem(fs_path: impl AsRef<Path>) -> Result<Vec<u8>, FSError> {
     // Make sure the path is normalized to absolute.
     let fs_path = fs_path.as_ref().canonicalize()?;
 

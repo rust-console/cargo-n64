@@ -9,8 +9,8 @@ use std::num::Wrapping;
 use std::path::Path;
 use thiserror::Error;
 
-crate const IPL_SIZE: usize = 0x0fc0;
-crate const PROGRAM_SIZE: usize = 1024 * 1024;
+pub(crate) const IPL_SIZE: usize = 0x0fc0;
+pub(crate) const PROGRAM_SIZE: usize = 1024 * 1024;
 
 #[derive(Debug, Error)]
 pub enum IPL3Error {
@@ -22,7 +22,7 @@ pub enum IPL3Error {
 }
 
 /// IPL3 definitions.
-crate enum IPL3 {
+pub(crate) enum IPL3 {
     Cic6101([u8; IPL_SIZE]),
     Cic6102([u8; IPL_SIZE]),
     Cic6103([u8; IPL_SIZE]),
@@ -54,7 +54,7 @@ impl fmt::Debug for IPL3 {
 }
 
 impl IPL3 {
-    crate fn read(path: impl AsRef<Path>) -> Result<IPL3, IPL3Error> {
+    pub(crate) fn read(path: impl AsRef<Path>) -> Result<IPL3, IPL3Error> {
         // TODO
         let mut f = File::open(path)?;
 
@@ -75,7 +75,7 @@ impl IPL3 {
         Self::check(ipl)
     }
 
-    crate fn read_from_rom(path: impl AsRef<Path>) -> Result<IPL3, IPL3Error> {
+    pub(crate) fn read_from_rom(path: impl AsRef<Path>) -> Result<IPL3, IPL3Error> {
         let mut f = File::open(&path)?;
         f.seek(SeekFrom::Start(HEADER_SIZE as u64))?;
 
@@ -109,7 +109,7 @@ impl IPL3 {
         Ok(ipl3)
     }
 
-    crate fn get_ipl(&self) -> &[u8; IPL_SIZE] {
+    pub(crate) fn get_ipl(&self) -> &[u8; IPL_SIZE] {
         match self {
             IPL3::Cic6101(bin) => bin,
             IPL3::Cic6102(bin) => bin,
@@ -121,7 +121,7 @@ impl IPL3 {
         }
     }
 
-    crate fn compute_crcs(&self, program: &[u8], fs: &[u8]) -> (u32, u32) {
+    pub(crate) fn compute_crcs(&self, program: &[u8], fs: &[u8]) -> (u32, u32) {
         let padding_length = (2 - (program.len() & 1)) & 1;
         let padding = [0; 1];
         let program = program
@@ -160,7 +160,7 @@ impl IPL3 {
         for chunk in &program {
             // Fetch the current word and rotate it by itself
             current = Wrapping(BigEndian::read_u32(&chunk.collect::<Vec<_>>()));
-            rotated = current.rotate_left((current & Wrapping(0x1f)).0);
+            rotated = Wrapping(current.0.rotate_left((current & Wrapping(0x1f)).0));
 
             // Advance accumulator 1
             acc1 += current;
@@ -206,7 +206,7 @@ impl IPL3 {
     }
 
     /// Offset the entry point for the current IPL3
-    crate fn offset(&self, entry_point: u32) -> u32 {
+    pub(crate) fn offset(&self, entry_point: u32) -> u32 {
         entry_point
             + match self {
                 IPL3::Cic6103(_) => 0x0010_0000,

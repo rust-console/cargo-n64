@@ -1,6 +1,5 @@
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
-#![warn(rust_2018_idioms)]
 #![no_std]
 
 // Pull panic into scope
