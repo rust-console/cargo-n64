@@ -120,8 +120,8 @@ pub fn run<T: AsRef<str>>(args: &[T]) -> Result<bool, RunError> {
             // being up to date, we have cargo-xbuild as a dep, and just transfer control to it
             // when we're being invoked as such.
             let args = env::args().collect::<Vec<_>>();
-            let args = xargo_lib::Args::from_raw(args.iter().skip(3))
-                .map_err(|s| XbuildArgParseError(s))?;
+            let args =
+                xargo_lib::Args::from_raw(args.iter().skip(3)).map_err(XbuildArgParseError)?;
 
             xargo_lib::build(args, "build", None).map_err(|e| XbuildError(e.to_string()))?;
 
