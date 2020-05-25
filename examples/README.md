@@ -20,5 +20,5 @@ This is a "hello world" that uses the font embedded in the IPL3 bootrom. The fon
 To build with `cargo n64` from the project root directory, use the `--package` argument:
 
 ```
-$ cargo n64 build --ipl3 /path/to/ipl3.bin --package hello-ipl3font
+$ cargo n64 build --ipl3 /path/to/ipl3.bin -- --package hello-ipl3font
 ```

@@ -26,12 +26,13 @@ pub enum SubcommandError {
 }
 
 trait Runner {
-    fn run(&mut self, verbose: bool) -> io::Result<Output>;
+    fn run(&mut self, verbose: usize) -> io::Result<Output>;
 }
 
 impl Runner for Command {
-    fn run(&mut self, verbose: bool) -> io::Result<Output> {
-        if verbose {
+    fn run(&mut self, verbose: usize) -> io::Result<Output> {
+        if verbose > 0 {
+            self.arg(format!("-{}", str::repeat("v", verbose)));
             eprintln!("+ {:?}", self);
         }
 
@@ -60,9 +61,7 @@ struct CargoMessageMessage {
     rendered: String,
 }
 
-pub(crate) fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandError> {
-    let verbose = args.verbose();
-
+pub(crate) fn run(args: &cli::BuildArgs, verbose: usize) -> Result<CargoArtifact, SubcommandError> {
     // Add -Clinker-plugin-lto if necessary
     let rustflags = env::var("RUSTFLAGS")
         .and_then(|mut var| {
@@ -90,7 +89,7 @@ pub(crate) fn run(args: &cli::BuildArgs) -> Result<CargoArtifact, SubcommandErro
         .arg("n64")
         .arg("xbuild")
         .arg("--message-format=json-render-diagnostics")
-        .arg(format!("--target={}", args.target))
+        .arg(format!("--target={}", args.target.as_ref().unwrap()))
         .args(build_args)
         .stderr(Stdio::inherit())
         .run(verbose)?;

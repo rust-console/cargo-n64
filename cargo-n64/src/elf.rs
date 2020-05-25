@@ -13,7 +13,7 @@ pub enum ElfError {
     #[error("ELF parsing error")]
     GoblinError(#[from] GoblinError),
 
-    #[error("Dump error: {}", _0)]
+    #[error("Dump error: {0}")]
     DumpError(String),
 }
 
