@@ -44,6 +44,7 @@ pub enum ArgParseError {
 pub(crate) enum Subcommand {
     None,
     Build,
+    XBuild,
 }
 
 #[derive(Debug)]
@@ -87,6 +88,10 @@ pub(crate) fn parse_args() -> Result<Args, ArgParseError> {
         Some("build") => {
             args.next();
             Subcommand::Build
+        }
+        Some("xbuild") => {
+            args.next();
+            Subcommand::XBuild
         }
         _ => Subcommand::None,
     };

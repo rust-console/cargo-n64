@@ -119,25 +119,22 @@ where
 pub fn run() -> Result<bool, RunError> {
     use self::{BuildError::*, RunError::*};
 
-    let args = env::args().collect::<Vec<_>>();
-
-    // So users won't have to install an extra cargo command and worry about its version being
-    // up to date, we have cargo-xbuild as a dep, and just transfer control to it when we're being
-    // invoked as such.
-    if args.get(1).map(|a| a == "xbuild") == Some(true) {
-        let args = args.iter().skip(2);
-        let args =
-            xargo_lib::Args::from_raw(args).map_err(|s| RunError::from(XbuildArgParseError(s)))?;
-
-        xargo_lib::build(args, "build", None)
-            .map_err(|e| RunError::from(XbuildError(e.to_string())))?;
-
-        return Ok(false);
-    }
-
     let args = cli::parse_args()?;
     match args.subcommand {
         cli::Subcommand::Build => build(args)?,
+        cli::Subcommand::XBuild => {
+            // So users won't have to install an extra cargo command and worry about its version
+            // being up to date, we have cargo-xbuild as a dep, and just transfer control to it
+            // when we're being invoked as such.
+            let args = env::args().collect::<Vec<_>>();
+            let args = xargo_lib::Args::from_raw(args.iter().skip(3))
+                .map_err(|s| RunError::from(XbuildArgParseError(s)))?;
+
+            xargo_lib::build(args, "build", None)
+                .map_err(|e| RunError::from(XbuildError(e.to_string())))?;
+
+            return Ok(false);
+        }
         _ => return Err(UnknownSubcommand),
     }
 

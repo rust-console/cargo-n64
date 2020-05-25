@@ -2,9 +2,13 @@
 Nintendo 64 build tool
 
 USAGE:
-    cargo n64 build [OPTIONS]
+    cargo n64 <COMMAND> [OPTIONS]
 
-OPTIONS:
+COMMANDS:
+    build               Build an executable ROM for Nintendo 64
+    xbuild              Build the Rust sysroot for the Nintendo 64 target
+
+build OPTIONS:
     -h, --help          Print help info and exit
     -V, --version       Print version info and exit
     --target <TRIPLE>   Build target triple [Default: {}]
