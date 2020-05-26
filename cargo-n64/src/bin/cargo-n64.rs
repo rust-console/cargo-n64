@@ -2,7 +2,10 @@
 #![forbid(unsafe_code)]
 
 use cargo_n64::{handle_errors, run};
+use std::env;
 
 fn main() {
-    handle_errors(run);
+    let args: Vec<_> = env::args().skip(1).collect();
+
+    handle_errors(run, &args);
 }

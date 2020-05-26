@@ -10,7 +10,7 @@ mod header;
 mod ipl3;
 
 use crate::cargo::SubcommandError;
-use crate::cli::{ArgParseError, Args, BuildArgs};
+use crate::cli::{parse_args, ArgParseError, BuildArgs, Subcommand};
 use crate::elf::ElfError;
 use crate::fs::FSError;
 use crate::header::{N64Header, HEADER_SIZE};
@@ -18,7 +18,6 @@ use crate::ipl3::{IPL_SIZE, PROGRAM_SIZE};
 use colored::Colorize;
 use error_iter::ErrorIter;
 use std::cmp;
-use std::env;
 use std::path::PathBuf;
 use std::process;
 use std::time::Instant;
@@ -29,26 +28,20 @@ pub enum RunError {
     #[error("Argument parsing error")]
     ArgParseError(#[from] ArgParseError),
 
-    #[error("Error running subcommand")]
-    UnknownSubcommand,
-
     #[error("Build error")]
     BuildError(#[from] BuildError),
-}
-
-impl ErrorIter for RunError {}
-
-#[derive(Debug, Error)]
-pub enum BuildError {
-    #[error("Argument parsing error")]
-    ArgParseError(#[from] ArgParseError),
 
     #[error("xbuild argument parsing error: {0}")]
     XbuildArgParseError(String),
 
     #[error("xbuild error: {0}")]
     XbuildError(String), // `String` because `xargo_lib::Error` is private
+}
 
+impl ErrorIter for RunError {}
+
+#[derive(Debug, Error)]
+pub enum BuildError {
     #[error("Subcommand failed")]
     SubcommandError(#[from] SubcommandError),
 
@@ -69,9 +62,6 @@ pub enum BuildError {
 
     #[error("Could not create file `{0}`")]
     CreateFileError(String),
-
-    #[error("Could not write file `{0}`")]
-    WriteFileError(String),
 }
 
 fn print_backtrace(error: &dyn std::error::Error) {
@@ -83,14 +73,15 @@ fn print_backtrace(error: &dyn std::error::Error) {
     }
 }
 
-pub fn handle_errors<E, R>(run: R)
+pub fn handle_errors<E, R, T>(run: R, args: &[T])
 where
     E: std::error::Error + ErrorIter,
-    R: Fn() -> Result<bool, E>,
+    R: Fn(&[T]) -> Result<bool, E>,
+    T: AsRef<str>,
 {
     let start = Instant::now();
 
-    match run() {
+    match run(args) {
         Err(e) => {
             eprintln!("{} {}", "error:".red(), e);
             print_backtrace(&e);
@@ -116,29 +107,23 @@ where
 
 /// This is the entrypoint. It is responsible for parsing the cli args common to
 /// all subcommands, and ultimately executing the requested subcommand.
-pub fn run() -> Result<bool, RunError> {
-    use self::{BuildError::*, RunError::*};
+pub fn run<T: AsRef<str>>(args: &[T]) -> Result<bool, RunError> {
+    use self::RunError::*;
 
-    let args = env::args().collect::<Vec<_>>();
+    let args = parse_args(args)?;
 
-    // So users won't have to install an extra cargo command and worry about its version being
-    // up to date, we have cargo-xbuild as a dep, and just transfer control to it when we're being
-    // invoked as such.
-    if args.get(1).map(|a| a == "xbuild") == Some(true) {
-        let args = args.iter().skip(2);
-        let args =
-            xargo_lib::Args::from_raw(args).map_err(|s| RunError::from(XbuildArgParseError(s)))?;
+    match args.subcommand.unwrap() {
+        Subcommand::Build(build_args) => build(build_args, args.verbose)?,
+        Subcommand::Xbuild(xbuild_args) => {
+            // So users won't have to install an extra cargo command and worry about its version
+            // being up to date, we have cargo-xbuild as a dep, and just transfer control to it
+            // when we're being invoked as such.
+            let args = xargo_lib::Args::from_raw(&xbuild_args.rest).map_err(XbuildArgParseError)?;
 
-        xargo_lib::build(args, "build", None)
-            .map_err(|e| RunError::from(XbuildError(e.to_string())))?;
+            xargo_lib::build(args, "build", None).map_err(|e| XbuildError(e.to_string()))?;
 
-        return Ok(false);
-    }
-
-    let args = cli::parse_args()?;
-    match args.subcommand {
-        cli::Subcommand::Build => build(args)?,
-        _ => return Err(UnknownSubcommand),
+            return Ok(false);
+        }
     }
 
     Ok(true)
@@ -146,18 +131,14 @@ pub fn run() -> Result<bool, RunError> {
 
 /// The build subcommand. Parses cli args specific to build, executes
 /// `cargo xbuild`, and transforms the ELF to a ROM file.
-fn build(args: Args) -> Result<(), BuildError> {
+fn build(mut args: BuildArgs, verbose: usize) -> Result<(), BuildError> {
     use self::BuildError::*;
 
-    let mut args = cli::parse_build_args(args)?;
-
     eprintln!("{:>12} with cargo xbuild", "Building".green().bold());
-    let artifact = cargo::run(&args)?;
+    let artifact = cargo::run(&args, verbose)?;
 
     // Set default program name
-    if args.name.is_empty() {
-        args.name = artifact.target.name;
-    }
+    args.name.get_or_insert(artifact.target.name);
     let args = args;
 
     eprintln!("{:>12} ELF to binary", "Dumping".green().bold());
@@ -224,9 +205,11 @@ fn create_rom_image(
 
     pad_program(&mut program);
 
+    let name = args.name.as_ref().unwrap();
+    let ipl3 = args.ipl3.as_ref().unwrap();
     let mut rom = [
-        &N64Header::new(entry_point, &args.name, &program, &fs, &args.ipl3).to_vec()[..],
-        args.ipl3.get_ipl(),
+        &N64Header::new(entry_point, name, &program, &fs, &ipl3).to_vec()[..],
+        ipl3.get_ipl(),
         &program,
         &fs,
     ]

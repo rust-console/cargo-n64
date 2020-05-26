@@ -1,7 +1,9 @@
-use crate::ipl3::{IPL3Error, IPL3};
+use crate::ipl3::IPL3;
+use gumdrop::Options;
+use std::env;
 use std::fs::{self, File};
 use std::io::Write;
-use std::{env, process};
+use std::process;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -9,195 +11,142 @@ pub enum ArgParseError {
     #[error("Must be invoked as cargo subcommand: `cargo n64`")]
     CargoSubcommand,
 
-    #[error("Missing subcommand, e.g. `cargo n64 build`")]
-    MissingSubcommand,
+    #[error("Argument parsing error")]
+    Gumdrop(#[from] gumdrop::Error),
+
+    #[error("One of `--ipl3` or `--ipl3-from-rom` are required")]
+    MissingIPL3Value,
+
+    #[error("`--ipl3` and `--ipl3-from-rom` are mutually exclusive")]
+    AmbiguousIPL3Value,
 
     #[error("Error creating target or linker script: {0}")]
     TargetCreationError(String),
 
     #[error("Error writing target or linker script: {0}")]
     TargetWriteError(String),
-
-    #[error("Missing target value")]
-    MissingTargetValue,
-
-    #[error("Missing IPL3 value")]
-    MissingIPL3Value,
-
-    #[error("Missing IPL3 from ROM value")]
-    MissingIPL3FromRomValue,
-
-    #[error("Missing name value")]
-    MissingNameValue,
-
-    #[error("Missing FS value")]
-    MissingFSValue,
-
-    #[error("FS value must be a path to a readable directory")]
-    InvalidFSValue,
-
-    #[error("IPL3 error")]
-    IPL3Error(#[from] IPL3Error),
 }
 
-#[derive(Debug)]
-pub(crate) enum Subcommand {
-    None,
-    Build,
-}
-
-#[derive(Debug)]
+#[derive(Debug, Options)]
 pub(crate) struct Args {
-    pub(crate) subcommand: Subcommand,
-    pub(crate) target: String,
-    pub(crate) rest: Vec<String>,
+    /// Print help info and exit
+    #[options()]
+    pub(crate) help: bool,
+
+    /// Print version info and exit
+    #[options(short = "V")]
+    pub(crate) version: bool,
+
+    /// Set verbosity, can be used multiple times
+    #[options(short = "v", count)]
+    pub(crate) verbose: usize,
+
+    /// Available subcommands
+    #[options(command)]
+    pub(crate) subcommand: Option<Subcommand>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Options)]
+pub(crate) enum Subcommand {
+    /// Build an executable ROM for Nintendo 64
+    #[options()]
+    Build(BuildArgs),
+
+    /// Build the Rust sysroot for the Nintendo 64 target
+    #[options()]
+    Xbuild(XBuildArgs),
+}
+
+#[derive(Debug, Options)]
 pub(crate) struct BuildArgs {
-    pub(crate) target: String,
-    pub(crate) name: String,
+    /// Build target triple
+    #[options()]
+    pub(crate) target: Option<String>,
+
+    /// Program name (Default: Crate name)
+    #[options()]
+    pub(crate) name: Option<String>,
+
+    /// Path to a directory for creating the embedded file system
+    #[options()]
     pub(crate) fs: Option<String>,
-    pub(crate) ipl3: IPL3,
+
+    /// Path to IPL3 (bootcode)
+    #[options(meta = "PATH", parse(try_from_str = "IPL3::read"))]
+    pub(crate) ipl3: Option<IPL3>,
+
+    /// Path to ROM where IPL3 (bootcode) will be extracted
+    #[options(meta = "PATH", parse(try_from_str = "IPL3::read_from_rom"))]
+    pub(crate) ipl3_from_rom: Option<IPL3>,
+
+    /// All remaining arguments will be passed directly to cargo-xbuild
+    #[options(free)]
     pub(crate) rest: Vec<String>,
 }
 
-impl BuildArgs {
-    pub(crate) fn verbose(&self) -> bool {
-        self.rest
-            .iter()
-            .any(|a| a == "--verbose" || a == "-v" || a == "-vv")
+fn print_usage(args: Args) {
+    println!("{}", env!("CARGO_PKG_NAME"));
+    println!("Nintendo 64 build tool");
+    println!();
+    println!("Usage:");
+
+    let command = match args.subcommand {
+        Some(Subcommand::Build(_)) => "build",
+        Some(Subcommand::Xbuild(_)) => "xbuild",
+        None => "<COMMAND>",
+    };
+    println!("  cargo n64 {} [OPTIONS]", command);
+    println!();
+    println!("{}", args.self_usage());
+    println!();
+
+    let commands = args.self_command_list();
+    if let Some(commands) = commands {
+        println!("Commands:");
+        println!("{}", commands);
     }
 }
 
-pub(crate) fn parse_args() -> Result<Args, ArgParseError> {
+#[derive(Debug, Options)]
+pub(crate) struct XBuildArgs {
+    /// All arguments will be passed directly to cargo-xbuild
+    #[options(free)]
+    pub(crate) rest: Vec<String>,
+}
+
+pub(crate) fn parse_args<T: AsRef<str>>(args: &[T]) -> Result<Args, ArgParseError> {
     use self::ArgParseError::*;
 
-    let mut args = env::args().skip(1);
-    if args.next() != Some("n64".to_owned()) {
+    let mut args = args.iter();
+    if args.next().map(|x| x.as_ref()) != Some("n64") {
         return Err(CargoSubcommand);
     }
 
-    let target = create_target()?;
-    let mut rest: Vec<String> = Vec::new();
+    let args: Vec<_> = args.collect();
+    let mut args = Args::parse_args_default(&args)?;
 
-    // Peek at the first arg to select the command
-    let mut args = args.peekable();
-    let subcommand = match args.peek().map(String::as_str) {
-        Some("build") => {
-            args.next();
-            Subcommand::Build
-        }
-        _ => Subcommand::None,
-    };
-
-    // Process common arguments
-    for arg in args {
-        if arg == "--help" || arg == "-h" {
-            eprintln!(
-                include_str!("templates/help.fmt"),
-                env!("CARGO_PKG_NAME"),
-                target
-            );
-            process::exit(0);
-        } else if arg == "--version" || arg == "-V" {
-            eprintln!(
-                "{}\nVersion {}",
-                env!("CARGO_PKG_NAME"),
-                env!("CARGO_PKG_VERSION")
-            );
-            process::exit(0);
-        } else {
-            rest.push(arg.to_owned());
-        }
+    // Print usage info
+    if args.help {
+        print_usage(args);
+        process::exit(0);
     }
 
-    // Check subcommand after handling --help and --version
-    if let Subcommand::None = subcommand {
-        return Err(MissingSubcommand);
-    }
-
-    Ok(Args {
-        subcommand,
-        target,
-        rest,
-    })
-}
-
-pub(crate) fn parse_build_args(args: Args) -> Result<BuildArgs, ArgParseError> {
-    use self::ArgParseError::*;
-
-    let mut target = args.target;
-    let mut name = String::new();
-    let mut fs = None;
-    let mut ipl3 = None;
-    let mut rest: Vec<String> = Vec::new();
-
-    let mut args = args.rest.iter();
-
-    // Process build subcommand arguments
-    while let Some(arg) = args.next() {
-        if arg.starts_with("--target") {
-            if let Some("=") = arg.get(8..9) {
-                target = arg[9..].to_owned();
-            } else if let Some(arg) = args.next() {
-                target = arg.to_owned();
-            } else {
-                return Err(MissingTargetValue);
-            }
-        } else if arg.starts_with("--name") {
-            if let Some("=") = arg.get(6..7) {
-                name = arg[7..].to_owned();
-            } else if let Some(arg) = args.next() {
-                name = arg.to_owned();
-            } else {
-                return Err(MissingNameValue);
-            }
-        } else if arg.starts_with("--fs") {
-            let path = if let Some("=") = arg.get(4..5) {
-                arg[5..].to_owned()
-            } else if let Some(arg) = args.next() {
-                arg.to_owned()
-            } else {
-                return Err(MissingFSValue);
-            };
-
-            let stat = fs::metadata(&path).map_err(|_| InvalidFSValue)?;
-            if !stat.is_dir() {
-                return Err(InvalidFSValue);
-            }
-
-            fs = Some(path);
-        } else if arg.starts_with("--ipl3-from-rom") {
-            ipl3 = Some(if let Some("=") = arg.get(15..16) {
-                IPL3::read_from_rom(&arg[16..])?
-            } else if let Some(arg) = args.next() {
-                IPL3::read_from_rom(&arg)?
-            } else {
-                return Err(MissingIPL3FromRomValue);
-            });
-        } else if arg.starts_with("--ipl3") {
-            ipl3 = Some(if let Some("=") = arg.get(5..6) {
-                IPL3::read(&arg[6..])?
-            } else if let Some(arg) = args.next() {
-                IPL3::read(&arg)?
-            } else {
+    if let Some(ref mut subcommand) = args.subcommand {
+        if let Subcommand::Build(ref mut build_args) = subcommand {
+            // IPL3 args are required and mutually exclusive
+            if build_args.ipl3.is_none() && build_args.ipl3_from_rom.is_none() {
                 return Err(MissingIPL3Value);
-            });
-        } else {
-            rest.push(arg.to_owned());
+            }
+            if build_args.ipl3.is_some() && build_args.ipl3_from_rom.is_some() {
+                return Err(AmbiguousIPL3Value);
+            }
+
+            // Set default target
+            build_args.target.get_or_insert(create_target()?);
         }
     }
 
-    let ipl3 = ipl3.ok_or(MissingIPL3Value)?;
-
-    Ok(BuildArgs {
-        target,
-        name,
-        fs,
-        ipl3,
-        rest,
-    })
+    Ok(args)
 }
 
 /// Create a target triple JSON file and linker script in a temporary directory.

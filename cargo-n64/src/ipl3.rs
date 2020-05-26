@@ -14,10 +14,10 @@ pub(crate) const PROGRAM_SIZE: usize = 1024 * 1024;
 
 #[derive(Debug, Error)]
 pub enum IPL3Error {
-    #[error("IO Error")]
+    #[error("IO Error: {0}")]
     IOError(#[from] io::Error),
 
-    #[error("Unable to read IPL3: {}", _0)]
+    #[error("Unable to read IPL3: {0}")]
     IPL3ReadError(String),
 }
 
@@ -55,7 +55,6 @@ impl fmt::Debug for IPL3 {
 
 impl IPL3 {
     pub(crate) fn read(path: impl AsRef<Path>) -> Result<IPL3, IPL3Error> {
-        // TODO
         let mut f = File::open(path)?;
 
         // Check the file size
