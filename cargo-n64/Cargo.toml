@@ -12,8 +12,8 @@ edition = "2018"
 
 [dependencies]
 byteorder = "1.3"
-cargo-xbuild = "0.5"
-colored = "1.9"
+cargo-xbuild = "0.6"
+colored = "2"
 crc32fast = "1.2"
 error-iter = "0.2"
 fatfs = "0.3"
