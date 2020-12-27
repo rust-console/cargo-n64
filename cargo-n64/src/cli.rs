@@ -131,19 +131,17 @@ pub(crate) fn parse_args<T: AsRef<str>>(args: &[T]) -> Result<Args, ArgParseErro
         process::exit(0);
     }
 
-    if let Some(ref mut subcommand) = args.subcommand {
-        if let Subcommand::Build(ref mut build_args) = subcommand {
-            // IPL3 args are required and mutually exclusive
-            if build_args.ipl3.is_none() && build_args.ipl3_from_rom.is_none() {
-                return Err(MissingIPL3Value);
-            }
-            if build_args.ipl3.is_some() && build_args.ipl3_from_rom.is_some() {
-                return Err(AmbiguousIPL3Value);
-            }
-
-            // Set default target
-            build_args.target.get_or_insert(create_target()?);
+    if let Some(Subcommand::Build(ref mut build_args)) = args.subcommand {
+        // IPL3 args are required and mutually exclusive
+        if build_args.ipl3.is_none() && build_args.ipl3_from_rom.is_none() {
+            return Err(MissingIPL3Value);
         }
+        if build_args.ipl3.is_some() && build_args.ipl3_from_rom.is_some() {
+            return Err(AmbiguousIPL3Value);
+        }
+
+        // Set default target
+        build_args.target.get_or_insert(create_target()?);
     }
 
     Ok(args)

@@ -71,7 +71,7 @@ impl IPL3 {
         let mut ipl = [0; IPL_SIZE];
         f.read_exact(&mut ipl)?;
 
-        Self::check(ipl)
+        Ok(Self::check(ipl))
     }
 
     pub(crate) fn read_from_rom(path: impl AsRef<Path>) -> Result<IPL3, IPL3Error> {
@@ -88,14 +88,14 @@ impl IPL3 {
             )));
         }
 
-        Self::check(ipl)
+        Ok(Self::check(ipl))
     }
 
-    fn check(ipl: [u8; IPL_SIZE]) -> Result<IPL3, IPL3Error> {
+    fn check(ipl: [u8; IPL_SIZE]) -> IPL3 {
         // Check for known IPLs
         let mut hasher = Hasher::new();
         hasher.update(&ipl);
-        let ipl3 = match hasher.finalize() {
+        match hasher.finalize() {
             0x6170_a4a1 => IPL3::Cic6101(ipl),
             0x90bb_6cb5 => IPL3::Cic6102(ipl),
             0x0b05_0ee0 => IPL3::Cic6103(ipl),
@@ -103,9 +103,7 @@ impl IPL3 {
             0xacc8_580a => IPL3::Cic6106(ipl),
             0x009e_9ea3 => IPL3::Cic7102(ipl),
             _ => IPL3::Unknown(ipl),
-        };
-
-        Ok(ipl3)
+        }
     }
 
     pub(crate) fn get_ipl(&self) -> &[u8; IPL_SIZE] {

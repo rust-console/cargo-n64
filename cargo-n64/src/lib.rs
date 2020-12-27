@@ -67,7 +67,7 @@ pub enum BuildError {
 fn print_backtrace(error: &dyn std::error::Error) {
     if let Some(backtrace) = error.backtrace() {
         let backtrace = backtrace.to_string();
-        if backtrace != "" {
+        if !backtrace.is_empty() {
             eprintln!("{}", backtrace);
         }
     }
