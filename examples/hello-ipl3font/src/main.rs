@@ -10,7 +10,7 @@ pub use rrt0;
 use n64lib::{ipl3font, vi};
 
 // Colors are 5:5:5:1 RGB with a 16-bit color depth.
-#[allow(clippy::inconsistent_digit_grouping)]
+#[allow(clippy::unusual_byte_groupings)]
 const WHITE: u16 = 0b11111_11111_11111_1;
 
 fn main() {

@@ -57,7 +57,7 @@ pub fn draw_str(mut x: usize, mut y: usize, color: u16, string: &str) {
         }
 
         // Special handling for lowercase letters
-        if ch >= b'a' && ch <= b'z' {
+        if (b'a'..=b'z').contains(&ch) {
             ch -= b'a' - b'A';
         }
 

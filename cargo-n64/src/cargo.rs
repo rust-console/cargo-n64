@@ -67,9 +67,9 @@ struct CargoMessageMessage {
 pub(crate) fn run(args: &cli::BuildArgs, verbose: usize) -> Result<CargoArtifact, SubcommandError> {
     // Add -Clinker-plugin-lto if necessary
     let rustflags = env::var("RUSTFLAGS")
-        .and_then(|mut var| {
+        .map(|mut var| {
             var.push_str(" -Clinker-plugin-lto");
-            Ok(var)
+            var
         })
         .or_else(|e| match e {
             env::VarError::NotPresent => Ok(String::from("-Clinker-plugin-lto")),
@@ -120,7 +120,7 @@ fn split_output(json: &str) -> (Vec<&str>, Vec<&str>) {
                 && x.find("] cargo:").is_none()
                 && x.find(r#""reason":"build-script-executed""#).is_none()
         })
-        .partition(|x| x.find(r#""reason":"compiler-artifact""#).is_some())
+        .partition(|x| x.contains(r#""reason":"compiler-artifact""#))
 }
 
 fn parse_artifact(json: &str) -> Result<CargoArtifact, SubcommandError> {

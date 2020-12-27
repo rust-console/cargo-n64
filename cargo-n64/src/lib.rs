@@ -67,7 +67,7 @@ pub enum BuildError {
 fn print_backtrace(error: &dyn std::error::Error) {
     if let Some(backtrace) = error.backtrace() {
         let backtrace = backtrace.to_string();
-        if backtrace != "" {
+        if !backtrace.is_empty() {
             eprintln!("{}", backtrace);
         }
     }
@@ -118,7 +118,8 @@ pub fn run<T: AsRef<str>>(args: &[T]) -> Result<bool, RunError> {
             // So users won't have to install an extra cargo command and worry about its version
             // being up to date, we have cargo-xbuild as a dep, and just transfer control to it
             // when we're being invoked as such.
-            let args = xargo_lib::Args::from_raw(&xbuild_args.rest).map_err(XbuildArgParseError)?;
+            let args = xargo_lib::Args::from_raw(&xbuild_args.rest)
+                .map_err(|err| XbuildArgParseError(err.to_string()))?;
 
             xargo_lib::build(args, "build", None).map_err(|e| XbuildError(e.to_string()))?;
 
