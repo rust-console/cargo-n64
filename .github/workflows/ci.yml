@@ -25,6 +25,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --all
       - name: Cargo n64 build
         run: |
           cargo install --path cargo-n64
