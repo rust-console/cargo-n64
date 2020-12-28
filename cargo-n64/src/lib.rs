@@ -30,12 +30,6 @@ pub enum RunError {
 
     #[error("Build error")]
     BuildError(#[from] BuildError),
-
-    #[error("xbuild argument parsing error: {0}")]
-    XbuildArgParseError(String),
-
-    #[error("xbuild error: {0}")]
-    XbuildError(String), // `String` because `xargo_lib::Error` is private
 }
 
 impl ErrorIter for RunError {}
@@ -108,34 +102,21 @@ where
 /// This is the entrypoint. It is responsible for parsing the cli args common to
 /// all subcommands, and ultimately executing the requested subcommand.
 pub fn run<T: AsRef<str>>(args: &[T]) -> Result<bool, RunError> {
-    use self::RunError::*;
-
     let args = parse_args(args)?;
 
     match args.subcommand.unwrap() {
         Subcommand::Build(build_args) => build(build_args, args.verbose)?,
-        Subcommand::Xbuild(xbuild_args) => {
-            // So users won't have to install an extra cargo command and worry about its version
-            // being up to date, we have cargo-xbuild as a dep, and just transfer control to it
-            // when we're being invoked as such.
-            let args = xargo_lib::Args::from_raw(&xbuild_args.rest)
-                .map_err(|err| XbuildArgParseError(err.to_string()))?;
-
-            xargo_lib::build(args, "build", None).map_err(|e| XbuildError(e.to_string()))?;
-
-            return Ok(false);
-        }
     }
 
     Ok(true)
 }
 
 /// The build subcommand. Parses cli args specific to build, executes
-/// `cargo xbuild`, and transforms the ELF to a ROM file.
+/// `cargo build-std`, and transforms the ELF to a ROM file.
 fn build(mut args: BuildArgs, verbose: usize) -> Result<(), BuildError> {
     use self::BuildError::*;
 
-    eprintln!("{:>12} with cargo xbuild", "Building".green().bold());
+    eprintln!("{:>12} with cargo build-std", "Building".green().bold());
     let artifact = cargo::run(&args, verbose)?;
 
     // Set default program name
@@ -146,7 +127,7 @@ fn build(mut args: BuildArgs, verbose: usize) -> Result<(), BuildError> {
     let filename = artifact.executable;
     let (entry_point, program) = elf::dump(&filename)?;
 
-    // XXX: See https://github.com/parasyte/technek/issues/1
+    // XXX: See https://github.com/rust-console/cargo-n64/issues/40
     if program.len() > 1024 * 1024 {
         return Err(ProgramTooBigError);
     }

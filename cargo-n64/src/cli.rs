@@ -51,10 +51,6 @@ pub(crate) enum Subcommand {
     /// Build an executable ROM for Nintendo 64
     #[options()]
     Build(BuildArgs),
-
-    /// Build the Rust sysroot for the Nintendo 64 target
-    #[options()]
-    Xbuild(XBuildArgs),
 }
 
 #[derive(Debug, Options)]
@@ -79,7 +75,7 @@ pub(crate) struct BuildArgs {
     #[options(meta = "PATH", parse(try_from_str = "IPL3::read_from_rom"))]
     pub(crate) ipl3_from_rom: Option<IPL3>,
 
-    /// All remaining arguments will be passed directly to cargo-xbuild
+    /// All remaining arguments will be passed directly to cargo
     #[options(free)]
     pub(crate) rest: Vec<String>,
 }
@@ -92,7 +88,6 @@ fn print_usage(args: Args) {
 
     let command = match args.subcommand {
         Some(Subcommand::Build(_)) => "build",
-        Some(Subcommand::Xbuild(_)) => "xbuild",
         None => "<COMMAND>",
     };
     println!("  cargo n64 {} [OPTIONS]", command);
@@ -109,7 +104,7 @@ fn print_usage(args: Args) {
 
 #[derive(Debug, Options)]
 pub(crate) struct XBuildArgs {
-    /// All arguments will be passed directly to cargo-xbuild
+    /// All arguments will be passed directly to cargo
     #[options(free)]
     pub(crate) rest: Vec<String>,
 }
