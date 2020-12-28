@@ -23,9 +23,6 @@ pub enum SubcommandError {
 
     #[error("JSON error: {1}")]
     JsonError(#[source] JsonError, String),
-
-    #[error("Couldn't get cargo-n64 executable path")]
-    ExePath(#[source] io::Error),
 }
 
 trait Runner {
@@ -88,10 +85,9 @@ pub(crate) fn run(args: &cli::BuildArgs, verbose: usize) -> Result<CargoArtifact
         args
     };
 
-    let output = Command::new(env::current_exe().map_err(SubcommandError::ExePath)?)
-        .arg("n64")
-        .arg("xbuild")
-        .arg("--")
+    let output = Command::new("cargo")
+        .arg("build")
+        .arg("-Z=build-std=core,alloc")
         .arg("--message-format=json-render-diagnostics")
         .arg(format!("--target={}", args.target.as_ref().unwrap()))
         .args(build_args)
