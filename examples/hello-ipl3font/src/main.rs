@@ -18,7 +18,4 @@ fn main() {
 
     ipl3font::draw_str_centered(WHITE, "Hello, world!");
     vi::swap_buffer();
-
-    #[allow(clippy::empty_loop)]
-    loop {}
 }

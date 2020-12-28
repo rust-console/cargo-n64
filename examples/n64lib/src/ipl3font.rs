@@ -1,7 +1,7 @@
 //! IPL3 font renderer.
 //!
 //! Draws strings using the font embedded in the official Nintendo IPL3 bootcode.
-//! See: https://github.com/PeterLemon/N64/blob/master/BOOTCODE/IPL3Font.asm
+//! See: <https://github.com/PeterLemon/N64/blob/master/BOOTCODE/IPL3Font.asm>
 
 use crate::vi;
 
