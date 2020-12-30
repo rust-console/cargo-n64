@@ -154,6 +154,14 @@ fn build(mut args: BuildArgs, verbose: usize) -> Result<(), BuildError> {
 const PAD_BYTE: u8 = 0xFF;
 const MULTIPLE: usize = 4 * 1024 * 1024;
 
+/// Align a byte buffer
+fn align_to(buffer: &mut Vec<u8>, alignment: usize) {
+    let alignment = alignment - 1;
+    let length = (buffer.len() + alignment) & !alignment;
+
+    buffer.resize(length, PAD_BYTE);
+}
+
 /// Pads the program to its minimum required size for CRC calculation
 fn pad_program(program: &mut Vec<u8>) {
     program.resize(cmp::max(PROGRAM_SIZE, program.len()), PAD_BYTE);
@@ -183,9 +191,13 @@ fn create_rom_image(
 ) -> Result<(), BuildError> {
     use self::BuildError::*;
 
-    let fs = fs.unwrap_or_default();
+    let mut fs = fs.unwrap_or_default();
 
     pad_program(&mut program);
+    align_to(&mut fs, std::mem::size_of::<u32>());
+
+    let program = program;
+    let fs = fs;
 
     let name = args.name.as_ref().unwrap();
     let ipl3 = args.ipl3.as_ref().unwrap();

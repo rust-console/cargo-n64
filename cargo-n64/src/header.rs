@@ -1,5 +1,3 @@
-use byteorder::{BigEndian, WriteBytesExt};
-
 use crate::ipl3::IPL3;
 
 pub(crate) const HEADER_SIZE: usize = 0x40;
@@ -83,13 +81,13 @@ impl N64Header {
         buffer.push(self.device_rw_pulse_width);
         buffer.push(self.device_page_size);
         buffer.push(self.device_rw_release_duration);
-        buffer.write_u32::<BigEndian>(self.clock_rate).unwrap();
-        buffer.write_u32::<BigEndian>(self.entry_point).unwrap();
-        buffer.write_u32::<BigEndian>(self.release).unwrap();
+        buffer.extend_from_slice(&self.clock_rate.to_be_bytes());
+        buffer.extend_from_slice(&self.entry_point.to_be_bytes());
+        buffer.extend_from_slice(&self.release.to_be_bytes());
 
         // 0x10
-        buffer.write_u32::<BigEndian>(self.crc1).unwrap();
-        buffer.write_u32::<BigEndian>(self.crc2).unwrap();
+        buffer.extend_from_slice(&self.crc1.to_be_bytes());
+        buffer.extend_from_slice(&self.crc2.to_be_bytes());
         buffer.extend_from_slice(&self._reserved_1);
 
         // 0x20
