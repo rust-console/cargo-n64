@@ -86,6 +86,7 @@ pub(crate) fn run(args: &cli::BuildArgs, verbose: usize) -> Result<CargoArtifact
     };
 
     let output = Command::new("cargo")
+        .arg(format!("+{}", include_str!("../../rust-toolchain").trim()))
         .arg("build")
         .arg("-Z=build-std=core,alloc")
         .arg("--message-format=json-render-diagnostics")
