@@ -9,4 +9,4 @@ members = [
 lto = "thin"
 
 [patch.crates-io]
-rrt0 = { path = "../rrt0", features = ["doctest"] }
+rrt0 = { git = "https://github.com/rust-console/rrt0.git", branch = "wip-io" }

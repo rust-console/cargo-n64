@@ -34,11 +34,11 @@ fn print(string: &str) {
     // Write one word at a time
     // It's ugly, but it optimizes really well!
     for (i, chunk) in bytes.chunks(4).enumerate() {
-        let val = match chunk {
-            &[a, b, c, d] => (a as u32) << 24 | (b as u32) << 16 | (c as u32) << 8 | (d as u32),
-            &[a, b, c] => (a as u32) << 24 | (b as u32) << 16 | (c as u32) << 8,
-            &[a, b] => (a as u32) << 24 | (b as u32) << 16,
-            &[a] => (a as u32) << 24,
+        let val = match *chunk {
+            [a, b, c, d] => (a as u32) << 24 | (b as u32) << 16 | (c as u32) << 8 | (d as u32),
+            [a, b, c] => (a as u32) << 24 | (b as u32) << 16 | (c as u32) << 8,
+            [a, b] => (a as u32) << 24 | (b as u32) << 16,
+            [a] => (a as u32) << 24,
             _ => unreachable!(),
         };
 
