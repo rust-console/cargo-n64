@@ -6,9 +6,12 @@ struct Stream;
 static mut STDOUT: Stream = Stream;
 static mut STDERR: Stream = Stream;
 
-const ISVIEWER: *mut u32 = 0xB3FF_0000 as *mut u32;
-const SEND: usize = 5;
-const BUF_BASE: usize = 8;
+const IS64_MAGIC: *mut u32 = 0xB3FF_0000 as *mut u32;
+const IS64_SEND: *mut u32 = 0xB3FF_0014 as *mut u32;
+const IS64_BUFFER: *mut u32 = 0xB3FF_0020 as *mut u32;
+
+// Rough estimate based on Cen64
+const BUFFER_SIZE: usize = 0x1000 - 0x20;
 
 impl fmt::Write for Stream {
     fn write_str(&mut self, s: &str) -> fmt::Result {
@@ -23,8 +26,8 @@ fn is_is64() -> bool {
 
     // SAFETY: It is always safe to read and write the magic value; static memory-mapped address.
     unsafe {
-        write_volatile(ISVIEWER, magic);
-        read_volatile(ISVIEWER) == magic
+        write_volatile(IS64_MAGIC, magic);
+        read_volatile(IS64_MAGIC) == magic
     }
 }
 
@@ -32,12 +35,11 @@ fn is_is64() -> bool {
 ///
 /// # Panics
 ///
-/// Maximum string length is just under 4KB.
+/// Asserts that the maximum string length is just under 4KB.
 fn print(string: &str) {
-    assert!(string.len() < 0x1000 - BUF_BASE * core::mem::size_of::<u32>());
+    assert!(string.len() < BUFFER_SIZE);
 
     let bytes = string.as_bytes();
-    let base = ISVIEWER.wrapping_add(BUF_BASE);
 
     // Write one word at a time
     // It's ugly, but it optimizes really well!
@@ -50,17 +52,15 @@ fn print(string: &str) {
             _ => unreachable!(),
         };
 
-        let ptr = base.wrapping_add(i);
+        let ptr = IS64_BUFFER.wrapping_add(i);
 
         // SAFETY: Bounds checking has already been performed.
         unsafe { write_volatile(ptr, val) };
     }
 
     // Write the string length
-    let ptr = ISVIEWER.wrapping_add(SEND);
-
     // SAFETY: It is always safe to write the length; static memory-mapped address.
-    unsafe { write_volatile(ptr, bytes.len() as u32) };
+    unsafe { write_volatile(IS64_SEND, bytes.len() as u32) };
 }
 
 /// Initialize global I/O for IS Viewer 64.
