@@ -1,7 +1,6 @@
 use crate::header::HEADER_SIZE;
-use byteorder::{BigEndian, ByteOrder};
 use crc32fast::Hasher;
-use itertools::Itertools;
+use std::convert::TryInto;
 use std::fmt;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
@@ -118,17 +117,20 @@ impl IPL3 {
         }
     }
 
+    /// Compute N64 checksums for a program.
+    ///
+    /// Panics if `program` or `fs` lengths are not evenly divisible by `size_of::<u32>`.
     pub(crate) fn compute_crcs(&self, program: &[u8], fs: &[u8]) -> (u32, u32) {
-        let padding_length = (2 - (program.len() & 1)) & 1;
-        let padding = [0; 1];
+        let word = std::mem::size_of::<u32>();
+        assert!(program.len() % word == 0);
+        assert!(fs.len() % word == 0);
+
+        let padding = [0; 4];
         let program = program
-            .iter()
-            .chain(&padding[0..padding_length])
-            .chain(fs.iter())
-            .chain(std::iter::repeat(&0))
-            .take(PROGRAM_SIZE)
-            .cloned()
-            .chunks(4);
+            .chunks(4)
+            .chain(fs.chunks(4))
+            .chain(std::iter::repeat(&padding[..]))
+            .take(PROGRAM_SIZE / word);
 
         // Initial checksum value
         let checksum = match self {
@@ -154,9 +156,9 @@ impl IPL3 {
         let mut rotated;
 
         // Iterate 1-word at a time
-        for chunk in &program {
+        for chunk in program {
             // Fetch the current word and rotate it by itself
-            current = Wrapping(BigEndian::read_u32(&chunk.collect::<Vec<_>>()));
+            current = Wrapping(u32::from_be_bytes(chunk.try_into().unwrap()));
             rotated = Wrapping(current.0.rotate_left((current & Wrapping(0x1f)).0));
 
             // Advance accumulator 1
@@ -184,7 +186,7 @@ impl IPL3 {
             match self {
                 IPL3::Cic6105(_) => {
                     let current_ipl = ipl.next().unwrap();
-                    let current_ipl = Wrapping(BigEndian::read_u32(&current_ipl));
+                    let current_ipl = Wrapping(u32::from_be_bytes(current_ipl.try_into().unwrap()));
                     acc6 += current ^ current_ipl;
                 }
                 _ => {
