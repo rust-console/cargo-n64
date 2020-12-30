@@ -19,7 +19,7 @@ impl fmt::Write for Stream {
 
 /// Check if Intelligent Systems Viewer 64 is available.
 fn is_is64() -> bool {
-    let magic = u32::from_ne_bytes(*b"IS64");
+    let magic = u32::from_be_bytes(*b"IS64");
     unsafe {
         write_volatile(ISVIEWER, magic);
         read_volatile(ISVIEWER) == magic
