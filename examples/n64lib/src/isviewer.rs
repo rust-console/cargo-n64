@@ -8,7 +8,7 @@ static mut STDERR: Stream = Stream;
 
 const ISVIEWER: *mut u32 = 0xB3FF_0000 as *mut u32;
 const SEND: usize = 5;
-const BUF: usize = 8;
+const BUF_BASE: usize = 8;
 
 impl fmt::Write for Stream {
     fn write_str(&mut self, s: &str) -> fmt::Result {
@@ -20,6 +20,8 @@ impl fmt::Write for Stream {
 /// Check if Intelligent Systems Viewer 64 is available.
 fn is_is64() -> bool {
     let magic = u32::from_be_bytes(*b"IS64");
+
+    // SAFETY: It is always safe to read and write the magic value; static memory-mapped address.
     unsafe {
         write_volatile(ISVIEWER, magic);
         read_volatile(ISVIEWER) == magic
@@ -27,9 +29,15 @@ fn is_is64() -> bool {
 }
 
 /// Print a string to IS Viewer 64.
+///
+/// # Panics
+///
+/// Maximum string length is just under 4KB.
 fn print(string: &str) {
+    assert!(string.len() < 0x1000 - BUF_BASE * core::mem::size_of::<u32>());
+
     let bytes = string.as_bytes();
-    let base = ISVIEWER.wrapping_add(BUF);
+    let base = ISVIEWER.wrapping_add(BUF_BASE);
 
     // Write one word at a time
     // It's ugly, but it optimizes really well!
@@ -44,18 +52,20 @@ fn print(string: &str) {
 
         let ptr = base.wrapping_add(i);
 
+        // SAFETY: Bounds checking has already been performed.
         unsafe { write_volatile(ptr, val) };
     }
 
     // Write the string length
     let ptr = ISVIEWER.wrapping_add(SEND);
 
+    // SAFETY: It is always safe to write the length; static memory-mapped address.
     unsafe { write_volatile(ptr, bytes.len() as u32) };
 }
 
 /// Initialize global I/O for IS Viewer 64.
 pub fn init() {
-    // Safe because the mutable borrow is only used while global STDOUT/STDERR is locked
+    // SAFETY: The mutable static is only accessed while the global STDOUT/STDERR lock is held,
     // and the local Stream type is private.
     if is_is64() {
         unsafe {
