@@ -7,3 +7,6 @@ members = [
 
 [profile.release]
 lto = "thin"
+
+[patch.crates-io]
+rrt0 = { path = "../rrt0", features = ["doctest"] }

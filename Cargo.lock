@@ -143,7 +143,6 @@ name = "hello-ipl3font"
 version = "0.1.0"
 dependencies = [
  "n64lib",
- "rrt0",
 ]
 
 [[package]]
@@ -191,6 +190,9 @@ dependencies = [
 [[package]]
 name = "n64lib"
 version = "0.1.0"
+dependencies = [
+ "rrt0",
+]
 
 [[package]]
 name = "num-integer"
@@ -238,10 +240,9 @@ dependencies = [
 [[package]]
 name = "rrt0"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51757480f8de75e061a1fcfd0ccbba6b88c8fc8975240ff700c4b528430eeba9"
 dependencies = [
  "libm",
+ "spin",
 ]
 
 [[package]]
@@ -300,6 +301,12 @@ dependencies = [
  "ryu",
  "serde",
 ]
+
+[[package]]
+name = "spin"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "652ac3743312871a5fb703f0337e68ffa3cdc28c863efad0b8dc858fa10c991b"
 
 [[package]]
 name = "syn"
