@@ -69,8 +69,8 @@ pub fn init() {
     // and the local Stream type is private.
     if is_is64() {
         unsafe {
-            rrt0::io::STDOUT.set_once(|| &mut STDOUT).unwrap();
-            rrt0::io::STDERR.set_once(|| &mut STDERR).unwrap();
+            rrt0::io::STDOUT.set(&mut STDOUT);
+            rrt0::io::STDERR.set(&mut STDERR);
         }
     }
 }

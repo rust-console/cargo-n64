@@ -9,4 +9,4 @@ members = [
 lto = "thin"
 
 [patch.crates-io]
-rrt0 = { git = "https://github.com/rust-console/rrt0.git", rev = "4d1cafd509db06798a049af983300cf52cf55bbf" }
+rrt0 = { git = "https://github.com/rust-console/rrt0.git", rev = "fcd38a8df6c1eafe3054107e37bf55aa0c6df967" }
