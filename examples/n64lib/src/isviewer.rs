@@ -3,9 +3,6 @@ use core::ptr::{read_volatile, write_volatile};
 
 struct Stream;
 
-static mut STDOUT: Stream = Stream;
-static mut STDERR: Stream = Stream;
-
 const IS64_MAGIC: *mut u32 = 0xB3FF_0000 as *mut u32;
 const IS64_SEND: *mut u32 = 0xB3FF_0014 as *mut u32;
 const IS64_BUFFER: *mut u32 = 0xB3FF_0020 as *mut u32;
@@ -64,13 +61,13 @@ fn print(string: &str) {
 }
 
 /// Initialize global I/O for IS Viewer 64.
+///
+/// # Panics
+///
+/// This function can only be called once.
 pub fn init() {
-    // SAFETY: The mutable static is only accessed while the global STDOUT/STDERR lock is held,
-    // and the local Stream type is private.
     if is_is64() {
-        unsafe {
-            rrt0::io::STDOUT.set(&mut STDOUT);
-            rrt0::io::STDERR.set(&mut STDERR);
-        }
+        rrt0::io::STDOUT.set_once(Stream).unwrap();
+        rrt0::io::STDERR.set_once(Stream).unwrap();
     }
 }
