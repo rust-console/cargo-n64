@@ -49,10 +49,8 @@ fn print(string: &str) {
             _ => unreachable!(),
         };
 
-        let ptr = IS64_BUFFER.wrapping_add(i);
-
         // SAFETY: Bounds checking has already been performed.
-        unsafe { write_volatile(ptr, val) };
+        unsafe { write_volatile(IS64_BUFFER.add(i), val) };
     }
 
     // Write the string length
