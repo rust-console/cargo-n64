@@ -240,7 +240,7 @@ dependencies = [
 [[package]]
 name = "rrt0"
 version = "0.2.1"
-source = "git+https://github.com/rust-console/rrt0.git?rev=7140c5ce9c9a00fb2cf158d3769cf8ee6d3e3921#7140c5ce9c9a00fb2cf158d3769cf8ee6d3e3921"
+source = "git+https://github.com/rust-console/rrt0.git?rev=6f86c4e997026e55cef7b5da5dda8786d5fae3bd#6f86c4e997026e55cef7b5da5dda8786d5fae3bd"
 dependencies = [
  "libm",
  "spin",
