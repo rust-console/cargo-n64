@@ -15,7 +15,7 @@ colored = "2.0"
 crc32fast = "1.2"
 error-iter = "0.2"
 fatfs = "0.3"
-goblin = { version = "0.3", default-features = false, features = ["std", "elf32", "elf64", "endian_fd"] }
+goblin = { version = "0.4", default-features = false, features = ["std", "elf32", "elf64", "endian_fd"] }
 gumdrop = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

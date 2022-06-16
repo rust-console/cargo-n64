@@ -119,15 +119,7 @@ fn dump_section<'a>(
     let header = elf
         .section_headers
         .iter()
-        .find(|&h| {
-            let sh_name = elf
-                .shdr_strtab
-                .get(h.sh_name)
-                .unwrap_or(Ok(""))
-                .unwrap_or("");
-
-            sh_name == name
-        })
+        .find(|&h| elf.shdr_strtab.get_at(h.sh_name).unwrap_or("") == name)
         .ok_or_else(|| Dump(format!("Could not find {} section", name)))?;
 
     // Get section data
