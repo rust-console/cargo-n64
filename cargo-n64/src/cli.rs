@@ -152,7 +152,7 @@ pub(crate) fn parse_args<T: AsRef<str>>(args: &[T]) -> Result<Args, ArgParseErro
 fn create_target() -> Result<String, ArgParseError> {
     // Sad, but this little helper function really simplifies the error handling
     fn path_to_string(path: &std::path::Path) -> String {
-        path.to_string_lossy().to_string().replace("\\", "/")
+        path.to_string_lossy().to_string().replace('\\', "/")
     }
 
     use self::ArgParseError::*;

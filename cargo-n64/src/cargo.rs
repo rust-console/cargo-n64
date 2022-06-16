@@ -10,19 +10,19 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum SubcommandError {
     #[error("Command failed with I/O error")]
-    IoError(#[from] io::Error),
+    Io(#[from] io::Error),
 
     #[error("Command failed with exit code: {0:?}")]
-    CommandError(Option<i32>),
+    Command(Option<i32>),
 
     #[error("Command failed with UTF-8 error")]
-    Utf8Error(#[from] FromUtf8Error),
+    Utf8(#[from] FromUtf8Error),
 
     #[error("Command failed with environment error")]
-    VarError(#[from] env::VarError),
+    Var(#[from] env::VarError),
 
     #[error("JSON error: {1}")]
-    JsonError(#[source] JsonError, String),
+    Json(#[source] JsonError, String),
 }
 
 trait Runner {
@@ -104,7 +104,7 @@ pub(crate) fn run(args: &cli::BuildArgs, verbose: usize) -> Result<CargoArtifact
         let (_artifacts, errors) = split_output(&json);
         print_messages(errors)?;
 
-        Err(SubcommandError::CommandError(output.status.code()))
+        Err(SubcommandError::Command(output.status.code()))
     }
 }
 
@@ -114,8 +114,8 @@ fn split_output(json: &str) -> (Vec<&str>, Vec<&str>) {
         .filter(|x| {
             !x.is_empty()
                 && !x.starts_with('#')
-                && x.find("] cargo:").is_none()
-                && x.find(r#""reason":"build-script-executed""#).is_none()
+                && !x.contains("] cargo:")
+                && !x.contains(r#""reason":"build-script-executed""#)
         })
         .partition(|x| x.contains(r#""reason":"compiler-artifact""#))
 }
@@ -127,7 +127,7 @@ fn parse_artifact(json: &str) -> Result<CargoArtifact, SubcommandError> {
 
     // Return build artifact
     let json = *artifacts.last().expect("Expected artifact JSON");
-    serde_json::from_str(json).map_err(|e| SubcommandError::JsonError(e, json.into()))
+    serde_json::from_str(json).map_err(|e| SubcommandError::Json(e, json.into()))
 }
 
 fn print_messages<'a, T>(messages: T) -> Result<(), SubcommandError>
@@ -136,7 +136,7 @@ where
 {
     for s in messages {
         let message: CargoMessage =
-            serde_json::from_str(s).map_err(|e| SubcommandError::JsonError(e, s.into()))?;
+            serde_json::from_str(s).map_err(|e| SubcommandError::Json(e, s.into()))?;
 
         if let Some(message) = message.message {
             eprintln!("{}", message.rendered);
