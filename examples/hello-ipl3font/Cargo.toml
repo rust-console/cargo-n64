@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 n64lib = { path = "../n64lib" }
-rrt0 = "0.2"
+rrt0 = "0.3"

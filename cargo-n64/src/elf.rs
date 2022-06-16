@@ -8,13 +8,13 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum ElfError {
     #[error("I/O error")]
-    IoError(#[from] io::Error),
+    Io(#[from] io::Error),
 
     #[error("ELF parsing error")]
-    GoblinError(#[from] GoblinError),
+    Goblin(#[from] GoblinError),
 
     #[error("Dump error: {0}")]
-    DumpError(String),
+    Dump(String),
 }
 
 pub(crate) struct SectionInfo<'a> {
@@ -23,7 +23,7 @@ pub(crate) struct SectionInfo<'a> {
 }
 
 pub(crate) fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
-    use self::ElfError::DumpError;
+    use self::ElfError::Dump;
     use goblin::elf::section_header;
 
     // Read the file
@@ -40,13 +40,13 @@ pub(crate) fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
 
     // Validate the .boot section
     if (section.header.sh_flags & u64::from(section_header::SHF_EXECINSTR)) == 0 {
-        return Err(DumpError(format!(
+        return Err(Dump(format!(
             "Non-executable .boot section: {}",
             section.header.sh_flags
         )));
     }
     if section.header.sh_addr != elf.header.e_entry {
-        return Err(DumpError(
+        return Err(Dump(
             "First byte of .boot section must be program entry point".into(),
         ));
     }
@@ -80,29 +80,29 @@ pub(crate) fn dump(filename: &str) -> Result<(u32, Vec<u8>), ElfError> {
 }
 
 fn validate(elf: &Elf<'_>) -> Result<(), ElfError> {
-    use self::ElfError::DumpError;
+    use self::ElfError::Dump;
     use goblin::elf::header;
 
     if elf.header.e_type != header::ET_EXEC {
         let e = format!("Unexpected ELF type: {}", elf.header.e_type);
-        return Err(DumpError(e));
+        return Err(Dump(e));
     }
     if elf.header.e_machine != header::EM_MIPS {
         let e = format!("Unexpected ELF machine: {}", elf.header.e_machine);
-        return Err(DumpError(e));
+        return Err(Dump(e));
     }
     if elf.header.e_entry > u64::from(u32::max_value()) {
         let e = format!("Entry point out if range: {}", elf.header.e_entry);
-        return Err(DumpError(e));
+        return Err(Dump(e));
     }
     if elf.little_endian {
-        return Err(DumpError(format!(
+        return Err(Dump(format!(
             "Unexpected ELF endianness: {}",
             elf.little_endian
         )));
     }
     if elf.section_headers.is_empty() {
-        return Err(DumpError("Missing ELF section headers".into()));
+        return Err(Dump("Missing ELF section headers".into()));
     }
 
     Ok(())
@@ -113,7 +113,7 @@ fn dump_section<'a>(
     data: &'a [u8],
     name: &str,
 ) -> Result<SectionInfo<'a>, ElfError> {
-    use self::ElfError::DumpError;
+    use self::ElfError::Dump;
 
     // Find the section by name
     let header = elf
@@ -128,14 +128,14 @@ fn dump_section<'a>(
 
             sh_name == name
         })
-        .ok_or_else(|| DumpError(format!("Could not find {} section", name)))?;
+        .ok_or_else(|| Dump(format!("Could not find {} section", name)))?;
 
     // Get section data
     let start = header.sh_offset as usize;
     let end = start + header.sh_size as usize;
     let binary = data
         .get(start..end)
-        .ok_or_else(|| DumpError("Index out of range".into()))?;
+        .ok_or_else(|| Dump("Index out of range".into()))?;
 
     Ok(SectionInfo { header, binary })
 }

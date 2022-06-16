@@ -73,14 +73,14 @@ impl N64Header {
         }
     }
 
-    pub(crate) fn to_vec(&self) -> Vec<u8> {
-        let mut buffer = Vec::new();
-
+    pub(crate) fn to_vec(self) -> Vec<u8> {
         // 0x00
-        buffer.push(self.device_latency);
-        buffer.push(self.device_rw_pulse_width);
-        buffer.push(self.device_page_size);
-        buffer.push(self.device_rw_release_duration);
+        let mut buffer = vec![
+            self.device_latency,
+            self.device_rw_pulse_width,
+            self.device_page_size,
+            self.device_rw_release_duration,
+        ];
         buffer.extend_from_slice(&self.clock_rate.to_be_bytes());
         buffer.extend_from_slice(&self.entry_point.to_be_bytes());
         buffer.extend_from_slice(&self.release.to_be_bytes());

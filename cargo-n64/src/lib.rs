@@ -104,8 +104,10 @@ where
 pub fn run<T: AsRef<str>>(args: &[T]) -> Result<bool, RunError> {
     let args = parse_args(args)?;
 
-    match args.subcommand.unwrap() {
-        Subcommand::Build(build_args) => build(build_args, args.verbose)?,
+    if let Some(Subcommand::Build(build_args)) = args.subcommand {
+        build(build_args, args.verbose)?;
+    } else if args.version {
+        println!(concat!("cargo-n64 version ", env!("CARGO_PKG_VERSION")));
     }
 
     Ok(true)
@@ -202,7 +204,7 @@ fn create_rom_image(
     let name = args.name.as_ref().unwrap();
     let ipl3 = args.ipl3.as_ref().unwrap();
     let mut rom = [
-        &N64Header::new(entry_point, name, &program, &fs, &ipl3).to_vec()[..],
+        &N64Header::new(entry_point, name, &program, &fs, ipl3).to_vec()[..],
         ipl3.get_ipl(),
         &program,
         &fs,
