@@ -26,6 +26,8 @@ jobs:
         run: |
           cargo install --path .
           dd if=/dev/zero of=/tmp/dummy-ipl3 bs=4032 count=1
+          git clone https://github.com/rust-console/rrt0.git /tmp/rrt0
+          cd /tmp/rrt0
           cargo n64 build --ipl3 /tmp/dummy-ipl3 -- --package hello-ipl3font
   tests:
     name: Test
