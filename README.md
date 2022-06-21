@@ -22,7 +22,7 @@ rustup run $(cat rust-toolchain) -- rustup component add rust-src
 Install `cargo-n64` from source:
 
 ```bash
-cargo install --path cargo-n64
+cargo install --path .
 ```
 
 Install `cargo-n64` from [crates.io](https://crates.io/):
