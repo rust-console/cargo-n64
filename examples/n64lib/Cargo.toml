@@ -1,7 +1,0 @@
-[package]
-name = "n64lib"
-version = "0.1.0"
-authors = ["Jay Oster <jay@kodewerx.org>"]
-edition = "2018"
-
-[dependencies]

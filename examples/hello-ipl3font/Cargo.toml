@@ -1,9 +1,0 @@
-[package]
-name = "hello-ipl3font"
-version = "0.1.0"
-authors = ["Jay Oster <jay@kodewerx.org>"]
-edition = "2018"
-
-[dependencies]
-n64lib = { path = "../n64lib" }
-rrt0 = "0.3"
