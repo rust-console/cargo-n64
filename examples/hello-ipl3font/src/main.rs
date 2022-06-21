@@ -1,11 +1,6 @@
 #![deny(clippy::all)]
-#![forbid(unsafe_code)]
+#![no_main]
 #![no_std]
-
-// Pull panic into scope
-// Required by panic_handler
-#[cfg(not(test))]
-pub use rrt0;
 
 use n64lib::{ipl3font, vi};
 
@@ -13,6 +8,7 @@ use n64lib::{ipl3font, vi};
 #[allow(clippy::unusual_byte_groupings)]
 const WHITE: u16 = 0b11111_11111_11111_1;
 
+#[no_mangle]
 fn main() {
     vi::init();
 

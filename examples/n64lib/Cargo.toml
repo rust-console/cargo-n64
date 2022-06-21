@@ -5,3 +5,4 @@ authors = ["Jay Oster <jay@kodewerx.org>"]
 edition = "2021"
 
 [dependencies]
+rrt0 = "0.4"

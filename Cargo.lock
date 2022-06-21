@@ -139,7 +139,6 @@ name = "hello-ipl3font"
 version = "0.1.0"
 dependencies = [
  "n64lib",
- "rrt0",
 ]
 
 [[package]]
@@ -187,6 +186,9 @@ dependencies = [
 [[package]]
 name = "n64lib"
 version = "0.1.0"
+dependencies = [
+ "rrt0",
+]
 
 [[package]]
 name = "num-integer"
@@ -233,9 +235,8 @@ dependencies = [
 
 [[package]]
 name = "rrt0"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95990a96c116f2c3036a0677f1b8e8885bdcf1e0f434a7529dff1467d272c0ec"
+version = "0.4.0"
+source = "git+https://github.com/rust-console/rrt0.git?rev=4140c6686b9e358a972cfde557fe4ee85898831e#4140c6686b9e358a972cfde557fe4ee85898831e"
 dependencies = [
  "libm",
 ]
